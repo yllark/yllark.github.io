@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="et">
 
 <head>
+<meta charset="UTF-8">
 <title>astronoomia.ee esilehe vigur</title>
 
 <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+
 <style>
     :root {
         --textcolor: #666;
@@ -83,6 +85,7 @@
     }
 
 </style>
+
 </head>
 
 <body style="background-color: transparent; margin: 0px; height: 500px; width: 300px;">
@@ -312,25 +315,7 @@
 <!-- Debug info -->
 <div style="display: none;">
     Praegune aeg: <span id="time-now"></span><br>
-    Vaatleja asukoht: <span id="observer-location"></span><br>
-</div>
-
-<!-- Font test -->
-<div style="display: none;">
-    1111111111<br>
-    2222222222<br>
-    3333333333<br>
-    4444444444<br>
-    5555555555<br>
-    6666666666<br>
-    7777777777<br>
-    8888888888<br>
-    9999999999<br>
-    0000000000<br><br>
-    0.0.0.0.0.0.0.0<br>
-    0,0,0,0,0,0,0,0<br>
-    0:0:0:0:0:0:0:0<br>
-    0/0/0/0/0/0/0/0
+    Vaatleja asukoht: <span id="observer-location"></span>
 </div>
 
 <br>
@@ -339,18 +324,28 @@
 </body>
 
 <!--Skriptid-->
-<script src="../external-scripts/astronomy.browser.min.js"></script>    <!--Astronomy Engine (https://github.com/cosinekitty/astronomy)-->
-<script src="../external-scripts/d3.v7.min.js"></script>                <!--D3 (https://d3js.org)-->
-<script src="../external-scripts/d3-geo-projection.min.js"></script>    <!--D3 extra projections https://github.com/d3/d3-geo-projection-->
+<!-- Veebis -->
+    <script src="../external-scripts/astronomy.browser.min.js"></script>
+    <script src="../external-scripts/d3.v7.min.js"></script>
+    <script src="../external-scripts/d3-geo-projection.min.js"></script>
+    <script src="../external-scripts/common.js"></script>
 
+
+<!-- Lokaal
+<script src="astronomy.browser.min.js"></script>
+<script src="d3.v7.min.js"></script>
+<script src="d3-geo-projection.min.js"></script>
+<script src="common.js"></script>
+ -->
 
 <!--Veebilehe skript-->
 <script>
 
 let t_current,
     t_suninfo,
-    t_mooninfo;
+    t_mooninfo,
 
+    obs_pos = new Astronomy.Observer(cities['estcen'].lat, cities['estcen'].lon, cities['estcen'].elev);
 
 // Kuu ja Päikese piltide seaded
 const   moon_img_width = 58,  // pix
@@ -369,211 +364,21 @@ let moon_map_width,
     moon_map_height,
     moon_map = new Image;
 
-moon_map.src = "../textures/lroc_color_poles_1k.jpg";
-moon_map.crossOrigin = "Anonymous";
-moon_map.onload = init_moonmap;
+//moon_map.src = "../textures/lroc_color_poles_1k.jpg"; // WEB
+moon_map.src = "https://raw.githubusercontent.com/yllark/yllark.github.io/refs/heads/main/astro/textures/lroc_color_poles_1k.jpg"; // LOCAL
 
-function init_moonmap () {
+moon_map.crossOrigin = "Anonymous";
+moon_map.onload = fw_init;
+
+
+// Viguri käivitus
+function fw_init () {
     moon_map_width = moon_map.naturalWidth;
     moon_map_height = moon_map.naturalHeight;
     document.getElementById("moon_map").width=moon_map_width;
     document.getElementById("moon_map").height=moon_map_height;
-    document.getElementById("moon_map").getContext("2d").drawImage(moon_map, 0, 0);
+    document.getElementById("moon_map").getContext("2d", { willReadFrequently: true }).drawImage(moon_map, 0, 0);
     fw_update(reset=true);
-}
-
-
-// Kuude nimetused eesti keeles
-let months_long_est = ['jaanuar', 'veebruar', 'märts', 'aprill', 'mai', 'juuni', 'juuli', 'august', 'september', 'oktoober', 'november', 'detsember'],
-    months_short_est = ['jan', 'veeb', 'mär', 'apr', 'mai', 'jun', 'jul', 'aug', 'sept', 'okt', 'nov', 'dets'];
-
-// Linnade koordinaadid ja vaatleja vaikimisi asukoht
-let cities = {
-    'estcen' :      {'lon' : 24.90, 'lat' : 58.70, 'elev' : 50},
-    'Haapsalu' :    {'lon' : 23.54, 'lat' : 58.94, 'elev' :  5},
-    'Kuressaare' :  {'lon' : 22.49, 'lat' : 58.25, 'elev' :  5},
-    'Kärdla' :      {'lon' : 22.75, 'lat' : 59.00, 'elev' :  5},
-    'Mustvee' :     {'lon' : 26.95, 'lat' : 58.85, 'elev' : 35},
-    'Narva' :       {'lon' : 28.19, 'lat' : 59.38, 'elev' : 25},
-    'Paide' :       {'lon' : 25.57, 'lat' : 58.88, 'elev' : 60},
-    'Petseri' :     {'lon' : 27.61, 'lat' : 57.81, 'elev' : 85},
-    'Pärnu' :       {'lon' : 24.50, 'lat' : 58.38, 'elev' :  5},
-    'Rakvere' :     {'lon' : 26.36, 'lat' : 59.35, 'elev' : 75},
-    'Rapla' :       {'lon' : 24.80, 'lat' : 59.00, 'elev' : 65},
-    'Tallinn' :     {'lon' : 24.75, 'lat' : 59.44, 'elev' : 10},
-    'Tartu' :       {'lon' : 26.73, 'lat' : 58.38, 'elev' : 35},
-    'Valga' :       {'lon' : 26.04, 'lat' : 57.78, 'elev' : 65},
-    'Viljandi' :    {'lon' : 25.60, 'lat' : 58.37, 'elev' : 80},
-    },
-    obs_pos = new Astronomy.Observer(cities['estcen'].lat, cities['estcen'].lon, cities['estcen'].elev);
-
-
-// Funktsioonid
-/**
- * Funktsioon aja trükkimiseks eri vormingutes
- * 
- * @arg {date object}   t
- * @arg {bool}          daylabel - kas trükkida päeva nimi (funktsioon dayname)
- * @arg {bool}          date - kas trükkida kuupäev
- * @arg {string}        months - kuu vorming: 'num', 'short', 'long'
- * @arg {bool}          years - kas trükkida aastaarv
- * @arg {string}        year - aastaarvu vorming vorming: 'short', 'long' (ignoreeritakse, kui years=false)
- * @arg {bool}          time - kas trükkida kellaaeg
- * @arg {bool}          secs - kellaaja trükkimine sekundi täpsusega. NB: kui false, siis *ümardatakse lähima* minutini
- * @arg {bool}          tz - kas trükkida ajavöönd
- * 
- * @returns {string}    Vormindatud aeg tekstina
- */
-function timeformat (t, daylabel=false, date=true, months='num', year=true, years='long', time=true, secs=true, tz=false) {
-
-    // Kui sekundeid ei trükita, ümarda aeg lähima minutini
-    if (!secs) {t = new Date(Math.round(t.getTime() / 60e3) * 60e3)}
-
-    let out = '';
-
-    // Päeva nimi
-    if (daylabel) {
-        out += dayname(t);
-        if ((date || year || time || tz) && out != '') {out += ', ';}
-    }
-
-    // Kuupäev ja kuu
-    if (date) {
-        if      (months == 'num')    {out += t.getDate() + '.' + String(t.getMonth()+1).padStart(2,'0');}
-        else if (months == 'long')   {out += t.getDate() + '. ' + months_long_est[t.getMonth()];}
-        else if (months == 'short')  {out += t.getDate() + '. ' + months_short_est[t.getMonth()];}
-    }
-    
-    // Aastaarv
-    if (year) {
-        if (date) {out += months == 'num' ? '.' : ' ';}
-        out +=  t.getFullYear();
-        if (years == 'short') {out = out.slice(0, -4) + out.slice(-2)};
-    }
-
-    // Kellaaeg
-    if (time) {
-        if (date || year) {out += ' ';}
-        if (secs)   {out += t.getHours() + ':' + String(t.getMinutes()).padStart(2,'0') + ':' + String(t.getSeconds()).padStart(2,'0');}
-        else        {out += t.getHours() + ':' + String(t.getMinutes()).padStart(2,'0');}
-    }
-
-    // Ajavöönd
-    if (tz) {
-        if (date || year || time) {out += ' ';}
-        out += 'UTC+' + t.getTimezoneOffset()/-60;
-    }
-    
-    return out;
-}
-
-
-/**
- * Funktsioon arvuliste väärtuste trükkimiseks eri vormingutes
- * 
- * @arg {number}    n
- * @arg {string}    mode - 'rel' - ümardamine tüvenumbriteni, 'abs' - ümardamine komakohtadeni, 'dms' - kraadid, minutid ja sekundid
- * @arg {number}    digits:
- *                      mode = 'rel' - tüvenumbrite arv, peab olema >1,
- *                      mode = 'abs' - komakohtade arv, võib olla ka negatiivne, nt -2: 2345.63 -> 2300
- *                      mode = 'dms' - 1: kraadi täpsus, 2: kaareminuti täpsus, 3: kaaresekundi täpsus, >3: kaaresekundi komakohad
- * @arg {string}    decimal - kümnendmurru eraldaja
- * 
- * @returns {string}    Vormindatud arv tekstina
- */
-function numberformat (n, mode='rel', digits=3, decimal=',') {
-    if      (mode == 'rel') {return n.toPrecision(digits).replace('.', decimal);}
-    else if (mode == 'abs') {return n.toFixed(digits).replace('.', decimal);}
-    else if (mode == 'dms') {
-        if      (digits == 1) {return n.toFixed(0) + '°';}
-        else if (digits > 1) {
-            if (digits > 2) {
-                n = Math.round(n*3.6*10**digits)/(10**(digits-3));
-                let s = n % 60;
-                let m = ((n-s)/60) % 60;
-                let d = (n-s-60*m)/3600;
-                return d.toFixed(0) + '°' + Math.abs(m).toFixed(0).padStart(2,' ') + "'" + Math.abs(s).toFixed(digits-3).padStart(2,' ').replace('.', decimal) + '"'
-            } else {
-                n = Math.round(60*n);
-                let m = n % 60;
-                let d = (n-m)/60;
-                return d.toFixed(0) + '°' + Math.abs(m).toFixed(0).padStart(2,' ') + "'"
-            }
-        }
-    }
-}
-
-
-/**
- * Funktsioon päeva nimetuste jaoks
- * 
- * @arg {date object}   t
- * @returns {string}    'eile', 'täna' või 'homme'
- */
-function dayname (t) {
-    let today = new Date();
-    let yesterday = new Date();
-    let tomorrow = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if      (t.getDate() == today.getDate() && t.getMonth() == today.getMonth() && t.getFullYear() == today.getFullYear())              {return 'täna';}
-    else if (t.getDate() == yesterday.getDate() && t.getMonth() == yesterday.getMonth() && t.getFullYear() == yesterday.getFullYear())  {return 'eile';}
-    else if (t.getDate() == tomorrow.getDate() && t.getMonth() == tomorrow.getMonth() && t.getFullYear() == tomorrow.getFullYear())     {return 'homme';}
-    else    {return '';}
-}
-
-
-/**
- * Funktsioon ilmakaarte vormindamiseks
- * 
- * @arg {number}   a
- * @arg {string}   mode - 'num', 'name', 'both'
- * 
- * @returns {string}    asimuut (kraadides, ümardatud täisarvudeni), ilmakaare tähis (N, NE, E, ...) või mõlemad
- */
-function cardinal (a, mode='both') {
-    a = a - 360 * Math.floor(a/360);
-
-    let out = '';
-    if (mode == 'num') {return a.toFixed(0) + '°';}
-    else {
-        let dir = ''
-        if      (a <  67.5 || a > 292.5) {dir += 'N';}
-        else if (a > 112.5 && a < 247.5) {dir += 'S';}
-        if      (a >  22.5 && a < 157.5) {dir += 'E';}
-        else if (a > 202.5 && a < 337.5) {dir += 'W';}
-
-        if      (mode == 'name') {return dir;}
-        else if (mode == 'both') {return a.toFixed(0) + '° (' + dir + ')';}
-    }
-}
-
-
-/**
- * Funktsioon kuufaaside nimetamiseks
- * 
- * @arg {date object}   t
- * @returns {string}    Kuu faasi nimetus
- */
-function moonphase (t) {
-    let moonperiod_start = Astronomy.SearchHourAngle('Moon', obs_pos, 12, t, -1).time;
-    let moonperiod_end = Astronomy.SearchHourAngle('Moon', obs_pos, 12, t, 1).time;
-    let nextquarter = Astronomy.SearchMoonQuarter(moonperiod_start);
-
-    if (nextquarter.time >= moonperiod_start && nextquarter.time <= moonperiod_end) {
-        if      (nextquarter.quarter == 0)  {return 'Kuuloomine';}
-        else if (nextquarter.quarter == 1)  {return'Esimene veerand';}
-        else if (nextquarter.quarter == 2)  {return 'Täiskuu';}
-        else if (nextquarter.quarter == 3)  {return 'Viimane veerand';}
-    } else {
-        let phaseangle = Astronomy.MoonPhase(t);
-        if      (phaseangle < 90)   {return 'Noorkuu';}
-        else if (phaseangle < 180)  {return 'Kasvav kuu';}
-        else if (phaseangle < 270)  {return 'Kahanev kuu';}
-        else                        {return 'Vanakuu';}
-    }
-
 }
 
 
@@ -682,7 +487,7 @@ function moondata (t) {
 
 
     // Infoväljad
-    // Kaugus, suurs ja faas
+    // Kaugus, suurus ja faas
     document.getElementById('fw-moon-phase').innerHTML = moonphase(moonmeridian.time) + ' (' + numberformat(100*Astronomy.Illumination('Moon', moonmeridian.time).phase_fraction,'abs',0) + '%)';
     document.getElementById('fw-moon-dist').innerHTML = 'Kaugus: ' + (libration.dist_km).toLocaleString('et-ee',{'maximumFractionDigits':0}) + ' km';
     document.getElementById('fw-moon-alt').innerHTML = '&nbsp;' + numberformat(moonmeridian.hor.altitude,'abs',1) + '°';
@@ -742,7 +547,7 @@ function moondata (t) {
     // Kuu pilt
     let xc = moon_img_width/2,
         yc = moon_img_height/2,
-        source = document.getElementById("moon_map").getContext("2d", { willReadFrequently: true }).getImageData(0, 0, moon_map_width, moon_map_height).data,
+        source = document.getElementById("moon_map").getContext("2d").getImageData(0, 0, moon_map_width, moon_map_height).data,
         out = document.getElementById("moon_img").getContext("2d").createImageData(moon_img_width, moon_img_height);
 
     let projection = d3.geoSatellite()
@@ -807,37 +612,6 @@ function fw_update (reset=false) {
 
     document.getElementById('time-now').innerHTML = timeformat(t_current);
     document.getElementById('observer-location').innerHTML = numberformat(obs_pos.latitude,'abs',2) + '°N; ' + numberformat(obs_pos.longitude,'abs',2) + '°E';
-}
-
-
-/**
- * Funktsioon arvulise väärtuse teisendamiseks vahemikust x0-x1 vahemikku y0-y1.
- * Vahemike algus- ja lõppväärtused võivad olla nii negatiivsed kui ka positiivsed ning esimene väärtus võib olla teisest suurem või vastupidi.
- * 
- * @arg {float}     x - interpoleeritav väärtus
- * @arg {float}     x0 - sisendvahemiku esimene väärtus (vastab y0)
- * @arg {float}     x1 - sisendvahemiku teine väärtus (vastab y1)
- * @arg {float}     y0 - väljundvahemiku esimene väärtus (vastab x0)
- * @arg {float}     y1 - väljundvahemiku teine väärtus (vastab x1)
- * @arg {bool}      clip:
- *                      true - väljundväärtus piiratakse vahemikku [y0, y1], ka juhul kui x ei ole vahemikus [x0, x1]
- *                      false - vaikimisi - väljundvahemikku ei piirata
- * 
- * @returns {float} Väljundvahemikku teisendatud väärtus
- */
-function interpolate (x, x0, x1, y0, y1, clip=false) {
-    y = (y1-y0)*(x-x0)/(x1-x0) + y0;
-    if (clip) {
-        if (y1 > y0) {
-            if      (y > y1) return y1
-            else if (y < y0) return y0
-            else return y
-        } else {
-            if      (y < y1) return y1
-            else if (y > y0) return y0
-            else return y
-        }  
-    } else return y
 }
 
 

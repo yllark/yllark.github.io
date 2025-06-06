@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="et">
+
+<head>
+<meta charset="UTF-8">
+<title>astronoomia.ee kalender</title>
+
+<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+
+<style>
+    :root {
+        --textcolor: #666;
+        --linecolor: #888;
+        --hovercolor: #00ccff88;
+        --bgcolor: #00ccff22;
+        --linemargin: 5px;
+    }
+
+    * {
+        font-family: 'Roboto', sans-serif;
+        color: var(--textcolor);
+    }
+
+    /* Kursorile reageerivad elemendid */
+    .hoverblock, .hoverblock-text {
+        background-color: var(--bgcolor);
+    }
+
+    .hoverblock:hover {
+        background-color: var(--hovercolor) !important;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+    .hoverblock-text:hover {
+        background-color: var(--hovercolor);
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    .hoverblock:active, .hoverblock-text:active, select:active, input:active {
+        filter: brightness(200%);
+    }
+
+    select, input {
+        background-color: transparent;
+        border: none;
+        vertical-align: middle;
+        margin: 1px 1px 2px 2px;
+        padding: 0px;
+    }
+
+    select:hover, input:hover {
+        background-color: var(--hovercolor);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    /* Tabeliväljade vaikimisi kujundus */
+    td, th {
+        width: 50px;
+        height: 40px;
+        padding: 0px;
+    }
+
+    .clicked {
+        border: 1px solid #666 !important;
+    }
+
+</style>
+
+</head>
+
+<body style="background-color: transparent; margin: 0px;">
+    
+    <h1 style="display: none;">Kalender:</h1>
+    
+    <!-- Kalendri tabel -->
+    <table style="border-collapse: separate; border-spacing: 0px;">
+    
+        <!-- Kalendri päis -->
+        <tbody>
+        
+            <!-- Navigatsioon -->
+            <tr>
+            
+                <!-- Eelmine kuu -->
+                <th
+                    class="hoverblock"
+                    style="
+                        width: 52px;
+                        border-top-left-radius: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="
+                        build_calendar(
+                            Number(document.getElementById('cal-month').value)-1,
+                            Number(document.getElementById('cal-year').value)
+                        )
+                    "
+                >
+                    <svg width="10" height="16">
+                        <polygon points="10,0 10,15 0,8" style="fill:var(--linecolor)" />
+                    </svg>
+                </th>
+            
+                <!-- Kuu ja aasta -->
+                <th colspan="5" style="background-color: var(--bgcolor);">
+                
+                    <!-- Aasta -->
+                    <input
+                        type="number"
+                        id="cal-year"
+                        dir="rtl"
+                        min="1918"
+                        max="2999"
+                        step="1"
+                        onchange="
+                            build_calendar(
+                                Number(document.getElementById('cal-month').value),
+                                Number(this.value)
+                            )
+                        "
+                        style="font-size: medium; font-weight: bold;"
+                    >
+                    
+                    <!-- Kuu -->
+                    <select
+                        id="cal-month"
+                        onchange="
+                            build_calendar(
+                                Number(this.value),
+                                Number(document.getElementById('cal-year').value)
+                            )
+                        "
+                        style="font-size: medium; font-weight: bold;"
+                    >
+                        <option value="0">jaanuar</option>
+                        <option value="1">veebruar</option>
+                        <option value="2">märts</option>
+                        <option value="3">aprill</option>
+                        <option value="4">mai</option>
+                        <option value="5">juuni</option>
+                        <option value="6">juuli</option>
+                        <option value="7">august</option>
+                        <option value="8">september</option>
+                        <option value="9">oktoober</option>
+                        <option value="10">november</option>
+                        <option value="11">detsember</option>
+                    </select>
+                </th>
+            
+                <!-- Järgmine kuu -->
+                <th
+                    class="hoverblock"
+                    style="
+                        width: 52px;
+                        border-top-right-radius: 20px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="
+                        build_calendar(
+                            Number(document.getElementById('cal-month').value)+1,
+                            Number(document.getElementById('cal-year').value)
+                        )
+                    "
+                >
+                    <svg width="10" height="16">
+                        <polygon points="0,0 0,15 10,8" style="fill:var(--linecolor)" />
+                    </svg>
+                </th>
+            </tr>
+        
+            <!-- Nädalapäevad -->
+            <tr style="background-color: var(--bgcolor);">
+                <th>E</th>
+                <th>T</th>
+                <th>K</th>
+                <th>N</th>
+                <th>R</th>
+                <th>L</th>
+                <th>P</th>
+            </tr>
+        </tbody>
+    
+        <!-- Kalender -->
+        <tbody id="cal-days">
+            <tr>
+                <th colspan="7">Laen kalendrit...</th>
+            </tr>
+        </tbody>
+    
+    </table>
+
+    <!-- Kalendrisüsteemi hoiatuse teade -->
+    <div
+        id="cal-warning"
+        style="
+            width: 344px;
+            padding: 10px;
+            font-size: smaller;
+            background-color: var(--bgcolor);
+        "
+        >
+    </div>
+
+    <!-- Seadete näitamise nupp -->
+    <div
+        id="cal-settings-toggle"
+        class="hoverblock"
+        style="
+            width: 344px;
+            padding: 10px;
+            font-size: smaller;
+        "
+        onclick="show_settings(!settings_on);"
+        >
+    </div>
+
+    <!-- Seaded ja filtrid -->
+    <div
+        id="cal-settings"
+        style="
+            height: 200px;
+            width: 324px;
+            border: 20px solid var(--bgcolor);
+            border-top: 10px solid var(--bgcolor);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            overflow-y: auto;
+            font-size: smaller;
+            line-height: 18px;
+        "
+        >
+
+        <span style="font-size: initial; font-weight: bold;">Sündmuste filtrid</span><br>
+        &emsp;<input type="checkbox" id="cal-earthseasons" onchange="eventfilter.earthseasons = this.checked; build_calendar(cal_month, cal_year);"> Maa aastaajad<br>
+        &emsp;<input type="checkbox" id="cal-moonphases" onchange="eventfilter.moonphases = this.checked; build_calendar(cal_month, cal_year);"> Kuu faasid<br>
+        &emsp;<input type="checkbox" id="cal-eclipses" onchange="eventfilter.eclipses = this.checked; build_calendar(cal_month, cal_year);"> Päikese- ja kuuvarjutused<br>
+
+        &emsp;<b>Apsiidid:</b><br>
+        &emsp;&emsp;<input type="checkbox" id="cal-earthapsides" onchange="eventfilter.earthapsides = this.checked; build_calendar(cal_month, cal_year);"> Maa
+              &emsp;<input type="checkbox" id="cal-moonapsides" onchange="eventfilter.moonapsides = this.checked; build_calendar(cal_month, cal_year);"> Kuu
+              &emsp;<input type="checkbox" id="cal-planetapsides" onchange="eventfilter.planetapsides = this.checked; build_calendar(cal_month, cal_year);"> planeedid<br>
+
+        &emsp;<b>Planeetide</b><br>
+        &emsp;&emsp;<input type="checkbox" id="cal-conjunctions" onchange="eventfilter.conjunctions = this.checked; build_calendar(cal_month, cal_year);"> ühendused Päikesega<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-retrogrades" onchange="eventfilter.retrogrades = this.checked; build_calendar(cal_month, cal_year);"> retrograadid<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-approaches" onchange="eventfilter.approaches = this.checked; build_calendar(cal_month, cal_year);"> ühendused omavahel ja Kuuga<br>
+
+        &emsp;&emsp;<b>Siseplaneetide</b> (Merkuur, Veenus)<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-transits" onchange="eventfilter.transits = this.checked; build_calendar(cal_month, cal_year);"> üleminekud Päikesest<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-elongations" onchange="eventfilter.elongations = this.checked; build_calendar(cal_month, cal_year);"> elongatsioonid<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-peakmagnitude" onchange="eventfilter.peakmagnitude = this.checked; build_calendar(cal_month, cal_year);"> Veenuse suurim heledus<br>
+
+        &emsp;&emsp;<b>Välisplaneetide</b> (Marss–Neptuun)<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-oppositions" onchange="eventfilter.oppositions = this.checked; build_calendar(cal_month, cal_year);"> vastasseisud<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-quadratures" onchange="eventfilter.quadratures = this.checked; build_calendar(cal_month, cal_year);"> kvadratuurid
+        <br><br>
+
+        <span style="font-size: initial; font-weight: bold;">Sündmuste seaded</span><br>
+        &emsp;Kuu faasid <select id="cal-moonphasetype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.moonphasetype = this.value; build_calendar(cal_month, cal_year);"><option value="ecl">ekliptiliselt</option><option value="geom">geomeetriliselt</option></select><br>
+        &emsp;Ühendused Päikesega ja vastasseisud <select id="cal-oppcontype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.oppcontype = this.value; build_calendar(cal_month, cal_year);"><option value="ecl">ekl.</option><option value="geom">geom.</option></select><br>
+        &emsp;Ühenduste vähim elongatsioon: <input type="number" id="cal-appminelong" dir="rtl" min="1" max="90" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appminelong = Number(this.value); build_calendar(cal_month, cal_year);">°<br>
+        &emsp;Ühenduste suurim kaugus: <input type="number" id="cal-appmaxdist" dir="rtl" min="1" max="20" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appmaxdist = Number(this.value); build_calendar(cal_month, cal_year);">°<br><br>
+
+        <span style="font-size: initial; font-weight: bold;">Planeetide filter</span><br>
+        &emsp;<input type="checkbox" id="cal-mercury" onchange="planetfilter.Mercury = this.checked; build_calendar(cal_month, cal_year);"> Merkuur
+        &emsp;<input type="checkbox" id="cal-venus" onchange="planetfilter.Venus = this.checked; build_calendar(cal_month, cal_year);"> Veenus
+        &emsp;<input type="checkbox" id="cal-mars" onchange="planetfilter.Mars = this.checked; build_calendar(cal_month, cal_year);"> Marss<br>
+        &emsp;<input type="checkbox" id="cal-jupiter" onchange="planetfilter.Jupiter = this.checked; build_calendar(cal_month, cal_year);"> Jupiter
+        &emsp;<input type="checkbox" id="cal-saturn" onchange="planetfilter.Saturn = this.checked; build_calendar(cal_month, cal_year);"> Saturn
+        &emsp;<input type="checkbox" id="cal-uranus" onchange="planetfilter.Uranus = this.checked; build_calendar(cal_month, cal_year);"> Uraan
+        &emsp;<input type="checkbox" id="cal-neptune" onchange="planetfilter.Neptune = this.checked; build_calendar(cal_month, cal_year);"> Neptuun
+
+
+    </div>
+    
+    <!-- Päeva sündmused -->
+    <div
+        id="day-events"
+        style="
+            height: 200px;
+            width: 324px;
+            border: 20px solid var(--bgcolor);
+            border-top: 10px solid var(--bgcolor);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            overflow-y: auto;
+        "
+        >Laen sündmuseid...
+    </div>
+
+</body>
+
+<!--Skriptid-->
+<!-- Veebis -->
+    <script src="../external-scripts/astronomy.browser.min.js"></script>
+    <script src="../external-scripts/common.js"></script>
+
+
+<!-- Lokaal
+<script src="astronomy.browser.min.js"></script>
+<script src="common.js"></script>
+ -->
+
+<!--Veebilehe skript-->
+<script>
+const   eventmarker_radius = 3,
+        calendarbox_width = 50;
+    
+let today = new Date(),
+
+    settings_on = false,
+    cal_month = today.getMonth(),
+    cal_year = today.getFullYear(),
+
+    datetable = [[{},{},{},{},{},{},{}]],
+    datekeys = {},
+    selected,
+
+    eventfilter = {
+        'moonphases' :      true,
+        'moonphasetype' :   'ecl',
+        'moonapsides' :     true,
+        'earthapsides' :    true,
+        'planetapsides' :   false,
+        'earthseasons' :    true,
+        'eclipses' :        true,
+        'transits' :        true,
+        'elongations' :     true,
+        'peakmagnitude' :   true,
+        'conjunctions' :    false,
+        'oppositions' :     true,
+        'oppcontype' :      'geom',
+        'quadratures' :     false,
+        'retrogrades' :     false,
+        'approaches' :      true,
+        'appminelong' :     15,
+        'appmaxdist' :      10
+    },
+
+    planetfilter = {
+        'Mercury' : true,
+        'Venus' :   true,
+        'Moon' :    true,
+        'Mars' :    true,
+        'Jupiter' : true,
+        'Saturn' :  true,
+        'Uranus' :  false,
+        'Neptune' : false
+    };
+
+
+// Algseadistus
+for (const [key, value] of Object.entries(eventfilter)) {
+    if (typeof value == 'boolean') {
+        document.getElementById('cal-'+key).checked = value;
+    } else if (typeof value == 'number' || typeof value == 'string') {
+        document.getElementById('cal-'+key).value = value;
+    }
+}
+for (const [key, value] of Object.entries(planetfilter)) {
+    if (key != 'Moon') {
+        document.getElementById('cal-'+key.toLowerCase()).checked = value;
+    }
+}
+
+
+// -----------------
+// Kalendri uuendus
+// -----------------
+function build_calendar (month, year) {
+
+    datetable = [[{},{},{},{},{},{},{}]];
+    datekeys = {};
+
+    let currentrow = 0,
+        datekey = '',
+        day = 0,
+
+        // Kuu esimene päev
+        date = new Date(year, month, 1, 12),
+        dow = (date.getDay()+6)%7;  // Nädalapäev, E=0 (jobud jänkid oma pühapäev=0 loogikaga)
+
+    // Uuenda väärtuseid aasta vahetuse puhul
+    document.getElementById('cal-month').value = cal_month = month = date.getMonth();
+    document.getElementById('cal-year').value = cal_year = year = date.getFullYear();
+
+    // Esimese rea esmaspäev
+    day = 1-dow;
+    dow = 0;
+    date.setDate(day);
+
+
+    // --------------------------
+    // Päevade tabeli koostamine
+    // --------------------------
+    let starttime = new Date(date.getTime());
+    starttime.setHours(0);
+
+    while (day < 38) {
+
+        datetable[currentrow][dow] = {
+            'date' :        new Date(date.getTime()),
+            'label' :       date.getDate(),
+            'thismonth' :   date.getMonth() == month,
+            'weekend' :     dow > 4,
+            'holiday' :     dow > 5,    // TODO improve
+            'flagday' :     false,      // TODO, incl mourning
+            'today' :       date.getDate() == today.getDate() && date.getMonth() == today.getMonth() && date.getFullYear() == today.getFullYear(),
+            'selected' :    datestring(date) == selected,
+            'events' :      [],         // TODO
+            'astroevents' : []          // TODO
+        };
+
+        datekey = datestring(date);
+        datekeys[datekey] = [currentrow, dow];
+
+        day += 1;
+        dow += 1;
+        date = new Date(year, month, day, 12);
+
+        if (dow > 6) {
+            if (date.getMonth() > month || (date.getMonth()==0 && month==11)) {
+                break;
+            } else {
+                dow = 0;
+                currentrow += 1;
+                datetable.push([{},{},{},{},{},{},{}]);
+            }
+        }
+    }
+
+    let endtime = new Date(date.getTime());
+    endtime.setHours(0);
+
+    starttime = Astronomy.MakeTime(starttime);
+    endtime = Astronomy.MakeTime(endtime);
+
+
+
+    // ---------------------
+    // Astronoomiasündmused
+    // ---------------------
+    let events, event, eventstart, eventend, eventdate, dates, x, y,
+        bodies, planet, data;
+
+
+    // Kuu veerandid (hetk)
+    if (eventfilter.moonphases) {
+
+        event = Astronomy.SearchMoonQuarter(starttime);
+
+        let params = [],
+            geom = eventfilter.moonphasetype == 'geom',
+            newevent;
+        if (geom) {
+            function moon_angle (t) { return Astronomy.Illumination('Moon', t).phase_angle-90 }
+            params = ['max', 'zero_d', 'min', 'zero_a'];
+            newevent = timesearch(moon_angle, event.time.AddDays(-1), event.time.AddDays(1), params[event.quarter], true);
+        }
+
+        while (event.time < endtime || (newevent > starttime && newevent < endtime)) {
+            try {
+                [y, x] = geom ? datekeys[datestring(newevent)] : datekeys[datestring(event.time)];
+                
+                datetable[y][x]['astroevents'].push({
+                    'type': 'moonquarter',
+                    'kind': event.quarter,
+                    'time': geom ? newevent.date : event.time.date
+                });
+            } finally {
+                event = Astronomy.NextMoonQuarter(event);
+                if (geom) { newevent = timesearch(moon_angle, event.time.AddDays(-1), event.time.AddDays(1), params[event.quarter], true); }
+            }
+        }
+    }
+
+    // Apsiidid (hetk)
+    bodies = []
+    if (eventfilter.earthapsides) { bodies.push('Earth'); }
+    if (eventfilter.moonapsides) { bodies.push('Moon'); }
+    if (eventfilter.planetapsides) {
+        for (planet of Object.keys(planetfilter)) {
+            if (planetfilter[planet] && planet != 'Moon') { bodies.push(planet); }
+        }
+    }
+
+    for (let body of bodies) {
+        if (body == 'Moon') { event = Astronomy.SearchLunarApsis(starttime); }
+        else                { event = Astronomy.SearchPlanetApsis(body, starttime); }
+
+        while (event.time < endtime) {
+            [y, x] = datekeys[ datestring(event.time) ];
+
+            datetable[y][x]['astroevents'].push({
+                'type': 'apsis',
+                'body': body,
+                'kind': event.kind == 0 ? 'p' : 'a',
+                'time': event.time.date,
+                'dist': event.dist_km
+            });
+
+            if (body == 'Moon') { event = Astronomy.NextLunarApsis(event); }
+            else                { event = Astronomy.NextPlanetApsis(body, event); }
+        }
+    }
+
+    // Maa aastaajad (hetk, max 1 sündmus kuus)
+    if (eventfilter.earthseasons) {
+        events = Astronomy.Seasons(year);
+        event = undefined;
+        if (events.mar_equinox > starttime && events.mar_equinox < endtime) {
+            event = 'mar_equinox';
+        } else if (events.jun_solstice > starttime && events.jun_solstice < endtime) {
+            event = 'jun_solstice';
+        } else if (events.sep_equinox > starttime && events.sep_equinox < endtime) {
+            event = 'sep_equinox';
+        } else if (events.dec_solstice > starttime && events.dec_solstice < endtime) {
+            event = 'dec_solstice';
+        }
+
+        if (typeof event == 'string') {
+            [y, x] = datekeys[ datestring(events[event]) ];
+
+            datetable[y][x]['astroevents'].push({
+                'type': 'earthseason',
+                'kind': event,
+                'time': events[event].date
+            });
+        }
+    }
+
+    // Kuu- ja päikesevarjutused (vahemikud)
+    if (eventfilter.eclipses) {
+
+        // Kuuvarjutused
+        event = Astronomy.SearchLunarEclipse(starttime.AddDays(-1));
+        eventstart = event.peak.AddDays(-event.sd_penum/1440);
+        eventend = event.peak.AddDays(event.sd_penum/1440);
+
+        while (eventstart < endtime && eventend > starttime) {
+
+            dates = daterange(eventstart, eventend);
+            for (datekey of dates) {
+                try { [y, x] = datekeys[datekey]; }
+                catch(TypeError) {continue}
+
+                datetable[y][x]['astroevents'].push({
+                    'type' :    'lunareclipse',
+                    'kind' :    event.kind,
+                    'obsc' :    event.obscuration,
+                    'time' :    event.peak.date,
+                    'dur_tot' : event.sd_total > 0 ? 2*event.sd_total : undefined,
+                    'dur_par' : event.sd_partial > 0 ? 2*event.sd_partial : undefined,
+                    'dur_pen' : 2*event.sd_penum,
+                    'start' :   eventstart.date,
+                    'end' :     eventend.date,
+                    'u1' :      event.sd_partial > 0 ? event.peak.AddDays(-event.sd_partial/1440).date : undefined,
+                    'u4' :      event.sd_partial > 0 ? event.peak.AddDays(event.sd_partial/1440).date : undefined,
+                    'u2' :      event.sd_total > 0 ? event.peak.AddDays(-event.sd_total/1440).date : undefined,
+                    'u3' :      event.sd_total > 0 ? event.peak.AddDays(event.sd_total/1440).date : undefined
+                });
+            }
+
+            event = Astronomy.NextLunarEclipse(event.peak);
+            eventstart = event.peak.AddDays(-event.sd_penum/1440);
+            eventend = event.peak.AddDays(event.sd_penum/1440);
+        }
+
+        // Päikesevarjutused
+        event = Astronomy.SearchGlobalSolarEclipse(starttime.AddDays(-1));
+        function partialedge(t) { return syzygy(t, 'Moon', 'Sun').dist_p; }
+        function centraledge(t) { return syzygy(t, 'Moon', 'Sun').dist_c; }
+        eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date;
+        eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date;
+
+        while (eventstart < endtime && eventend > starttime) {
+
+            if (event.kind == 'partial') {
+                // TODO obscuration for partial
+            }
+
+            dates = daterange(eventstart, eventend);
+            for (datekey of dates) {
+                try { [y, x] = datekeys[datekey]; }
+                catch(TypeError) {continue}
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'solareclipse',
+                    'kind' : event.kind,
+                    'obsc' : event.obscuration,
+                    'time' : event.peak.date,
+                    'start': eventstart.date,
+                    'end' :  eventend.date,
+                    'c2' :   event.kind == 'partial' ? undefined : timesearch( centraledge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date,
+                    'c3' :   event.kind == 'partial' ? undefined : timesearch( centraledge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date
+                });
+            }
+
+            event = Astronomy.NextGlobalSolarEclipse(event.peak);
+            eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date;
+            eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date;
+        }
+    }
+
+
+    // --------------
+    // Siseplaneedid
+    // --------------
+    for (planet of ['Mercury', 'Venus']) {
+        if (!planetfilter[planet]) { continue; }
+
+        // Elongatsioonid (hetk, max 1 sündmus kuus)
+        if (eventfilter.elongations) {
+
+            event = Astronomy.SearchMaxElongation(planet, starttime);
+
+            if (event.time < endtime) {
+                [y, x] = datekeys[ datestring(event.time) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'elongation',
+                    'body' : planet,
+                    'kind' : event.visibility == 'morning' ? 'W' : 'E',
+                    'time' : event.time.date,
+                    'dist' : event.elongation
+                });
+            }
+        }
+
+        // Alumised ühendused ja üleminekud (hetk, max 1 sündmus kuus)
+        if (eventfilter.conjunctions || eventfilter.transits) {
+        
+            event = Astronomy.SearchRelativeLongitude(planet, 0, starttime.AddDays(-14));
+            function elong(t) { return angdist('Sun', planet, t); }
+            let minelong = timesearch( elong, event.AddDays(-2), event.AddDays(2), 'min', true );
+
+            data = syzygy(minelong, 'Sun', planet);
+
+            // Planeedi üleminek Päikesest
+            if (data.type != 'none') {
+
+                function conjunctionedge (t) { return syzygy( t, 'Sun', planet ).dist_p }
+                eventstart = timesearch( conjunctionedge, minelong.AddDays(-1), minelong.AddDays(1), 'zero_d', true );
+                eventend = timesearch( conjunctionedge, minelong.AddDays(-1), minelong.AddDays(1), 'zero_a', true );
+
+                dates = daterange(eventstart, eventend);
+                for (datekey of dates) {
+                    try { [y, x] = datekeys[datekey]; }
+                    catch(TypeError) {continue}
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'conjunction',
+                        'kind' : data.type,
+                        'time' : minelong.date,
+                        'start': eventstart.date,
+                        'end'  : eventend.date,
+                        'body1': planet,
+                        'body2': 'Sun',
+                    });
+                }
+
+            // Ühendus - detailselt
+            } else if (eventfilter.conjunctions && eventfilter.oppcontype == 'geom' && minelong > starttime && minelong < endtime) {
+                [y, x] = datekeys[ datestring(minelong) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'conjunction_elong',
+                    'kind' : 'inferior',
+                    'body' : planet,
+                    'time' : minelong.date,
+                    'ang'  : elong(minelong)
+                });
+
+            // Ühendus - lihtsustatult
+            } else if (eventfilter.conjunctions && eventfilter.oppcontype == 'ecl' && event > starttime && event < endtime){
+                [y, x] = datekeys[ datestring(event) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'conjunction',
+                    'kind' : 'inferior',
+                    'body' : planet,
+                    'time' : event.date,
+                    'dist' : Astronomy.GeoVector(planet, event, true).Length(),
+                    'ang'  : elong(event)
+                });
+            }
+
+            // Vähim kaugus
+            if (eventfilter.conjunctions && eventfilter.oppcontype == 'geom' && event < endtime.AddDays(14)) {
+                function dist(t) { return Astronomy.GeoVector(planet, t, true).Length(); }
+                let mindist =  timesearch( dist,  event.AddDays(-14), event.AddDays(14), 'min', true );
+
+                if (mindist > starttime && mindist < endtime) {
+                    [y, x] = datekeys[ datestring(mindist) ];
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'conjunction_dist',
+                        'kind' : 'inferior',
+                        'body' : planet,
+                        'time' : mindist.date,
+                        'dist' : dist(mindist)
+                    });
+                }
+            }
+        }
+    }
+
+    // Veenuse maksimaalne heledus (hetk, max 1 sündmus kuus)
+    if (eventfilter.peakmagnitude && planetfilter['Venus']) {
+
+        event = Astronomy.SearchPeakMagnitude('Venus', starttime);
+
+        if (event.time < endtime) {
+            [y, x] = datekeys[ datestring(event.time) ];
+
+            datetable[y][x]['astroevents'].push({
+                'type' :    'peakmagnitude',
+                'body' :    'Venus',
+                'time' :    event.time.date,
+                'mag' :     event.mag,
+                'kind' :    Astronomy.Elongation('Venus', event.time).visibility == 'morning' ? 'W' : 'E'
+            });
+        }
+    }
+
+
+
+    // ---------------
+    // Välisplaneedid
+    // ---------------
+    for (planet of ['Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']) {
+        if (!planetfilter[planet]) { continue; }
+
+        // Vastasseisud (hetk, max 1 sündmus kuus)
+        if (eventfilter.oppositions) {
+            
+            event = Astronomy.SearchRelativeLongitude(planet, 0, starttime.AddDays(-14));
+
+            // Detailselt
+            if (eventfilter.oppcontype == 'geom' && event < endtime.AddDays(14)) {
+
+                function elong(t) { return angdist('Sun', planet, t); }
+                function dist(t) { return Astronomy.GeoVector(planet, t, true).Length(); }
+
+                let maxelong = timesearch( elong, event.AddDays(-14), event.AddDays(14), 'max', true ),
+                    mindist =  timesearch( dist,  event.AddDays(-14), event.AddDays(14), 'min', true );
+
+                // Suurim nurkkaugus
+                if (typeof(maxelong) != 'undefined' && maxelong > starttime && maxelong < endtime) {
+                    [y, x] = datekeys[ datestring(maxelong) ];
+
+                    data = Astronomy.Illumination(planet, maxelong);
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'opposition_elong',
+                        'body' : planet,
+                        'time' : maxelong.date,
+                        'mag'  : data.mag,
+                        'ang'  : data.phase_angle
+                    });
+                }
+
+                // Lähim asend
+                if (typeof(mindist) != 'undefined' && mindist > starttime && mindist < endtime) {
+                    [y, x] = datekeys[ datestring(mindist) ];
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'opposition_dist',
+                        'body' :  planet,
+                        'time' :  mindist.date,
+                        'dist' :  Astronomy.GeoVector(planet, mindist, true).Length()
+                    });
+                }
+
+            // Lihtsustatult
+            } else {
+                if (event > starttime && event < endtime) {
+                    [y, x] = datekeys[ datestring(event) ];
+
+                    data = Astronomy.Illumination(planet, eventtime);
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'opposition',
+                        'body' : planet,
+                        'time' : event.date,
+                        'dist' : data.geo_dist,
+                        'mag' :  data.mag,
+                        'ang'  : data.phase_angle
+                    });
+                }
+            }
+        }
+
+        // Kvadratuurid (hetk, max 1 sündmus kuus)
+        if (eventfilter.quadratures) {
+
+            function elong(t) { return angdist('Sun', planet, t)-90; }
+            event = timesearch( elong, starttime, endtime, 'zero', true );
+
+            if (typeof(event) != 'undefined') {
+                [y, x] = datekeys[ datestring(event) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'quadrature',
+                    'kind' : Astronomy.Elongation(planet, event).visibility == 'morning' ? 'W' : 'E',
+                    'body' : planet,
+                    'time' : event.date,
+                    'ang'  : Astronomy.Illumination(planet, event).phase_angle
+                });
+            }
+        }
+    }
+
+
+    // ---------------
+    // Kõik planeedid
+    // ---------------
+    for (planet of ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']) {
+        if (!planetfilter[planet]) { continue; }
+
+        // Ülemised ühendused (hetk, max 1 sündmus kuus)
+        if (eventfilter.conjunctions) {
+        
+            event = Astronomy.SearchRelativeLongitude(planet, 180, starttime.AddDays(-14));
+            function elong(t) { return angdist('Sun', planet, t); }
+            let minelong = timesearch( elong, event.AddDays(-2), event.AddDays(2), 'min', true );
+
+            data = syzygy(minelong, 'Sun', planet);
+
+            // Planeedi kattumine Päikesega
+            if (data.type != 'none') {
+
+                function conjunctionedge (t) { return syzygy( t, 'Sun', planet ).dist_p }
+                eventstart = timesearch( conjunctionedge, minelong.AddDays(-3), minelong.AddDays(3), 'zero_d', true );
+                eventend = timesearch( conjunctionedge, minelong.AddDays(-3), minelong.AddDays(3), 'zero_a', true );
+
+                dates = daterange(eventstart, eventend);
+                for (datekey of dates) {
+                    try { [y, x] = datekeys[datekey]; }
+                    catch(TypeError) {continue}
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'conjunction',
+                        'kind' : data.type,
+                        'time' : minelong.date,
+                        'start': eventstart.date,
+                        'end'  : eventend.date,
+                        'body1': 'Sun',
+                        'body2': planet,
+                    });
+                }
+
+            // Ühendus - detailselt
+            } else if (eventfilter.oppcontype == 'geom' && minelong > starttime && minelong < endtime) {
+                [y, x] = datekeys[ datestring(minelong) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'conjunction_elong',
+                    'kind' : 'superior',
+                    'body' : planet,
+                    'time' : minelong.date,
+                    'ang'  : elong(minelong)
+                });
+
+            // Ühendus - lihtsustatult
+            } else if (eventfilter.oppcontype == 'ecl' && event > starttime && event < endtime){
+                [y, x] = datekeys[ datestring(event) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'conjunction',
+                    'kind' : 'superior',
+                    'body' : planet,
+                    'time' : event.date,
+                    'dist' : Astronomy.GeoVector(planet, event, true).Length(),
+                    'ang'  : elong(event)
+                });
+            }
+
+            // Suurim kaugus
+            if (eventfilter.oppcontype == 'geom' && event < endtime.AddDays(14)) {
+                function dist(t) { return Astronomy.GeoVector(planet, t, true).Length(); }
+                let maxdist =  timesearch( dist,  event.AddDays(-14), event.AddDays(14), 'max', true );
+
+                if (maxdist > starttime && maxdist < endtime) {
+                    [y, x] = datekeys[ datestring(maxdist) ];
+
+                    datetable[y][x]['astroevents'].push({
+                        'type' : 'conjunction_dist',
+                        'kind' : 'superior',
+                        'body' : planet,
+                        'time' : maxdist.date,
+                        'dist' : dist(maxdist)
+                    });
+                }
+            }
+        }
+    
+        // Retrograadid (hetk, max 1 sündmus kuus)
+        if (eventfilter.retrogrades) {
+
+            function elon_delta(t) {
+                t = Astronomy.MakeTime(t);
+                let e1 = Astronomy.Ecliptic( Astronomy.GeoVector(planet,t.AddDays(-0.1),true) ).vec,
+                    e2 = Astronomy.Ecliptic( Astronomy.GeoVector(planet,t.AddDays(+0.1),true) ).vec
+                return Math.atan2( e1.x*e2.y-e2.x*e1.y, e1.x*e2.x+e1.y*e2.y );
+            }
+
+            retro = timesearch( elon_delta, starttime, endtime, 'zero_d', true );
+            pro = timesearch( elon_delta, starttime, endtime, 'zero_a', true );
+
+            // Retrograadi algus
+            if ( typeof(retro) != 'undefined' ) {
+                [y, x] = datekeys[ datestring(retro) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'retrograde',
+                    'kind' : 'start',
+                    'body' : planet,
+                    'time' : retro.date
+                });
+            }
+
+            // Retrograadi lõpp
+            if ( typeof(pro) != 'undefined' ) {
+                [y, x] = datekeys[ datestring(pro) ];
+
+                datetable[y][x]['astroevents'].push({
+                    'type' : 'retrograde',
+                    'kind' : 'end',
+                    'body' : planet,
+                    'time' : pro.date
+                });
+            }
+        }
+    }
+    
+
+    // Planeetide ja Kuu ühendused
+    if (eventfilter.approaches) {
+        bodies = {
+            1 : 'Mercury',
+            2 : 'Venus' ,
+            3 : 'Moon',
+            4 : 'Mars',
+            5 : 'Jupiter',
+            6 : 'Saturn',
+            7 : 'Uranus',
+            8 : 'Neptune'
+        }
+
+        for (let i = 1; i < 9; i++) {
+            for (let j = 1; j < 9; j++) {
+                if (i < j && planetfilter[bodies[i]] && planetfilter[bodies[j]]) {
+
+                    function separation (t) { return angdist( bodies[i], bodies[j], t ) }
+                    events = timesearch( separation, starttime.AddDays(-1), endtime.AddDays(1), 'min' );
+
+                    for (event of events) {
+                        data = syzygy(event, bodies[i], bodies[j]);
+                        let elong = Math.min( angdist('Sun', bodies[j], event), angdist('Sun', bodies[i], event) );
+
+                        // Ühendus (hetk)
+                        if (
+                            data.type == 'none' &&
+                            event > starttime &&
+                            event < endtime &&
+                            elong >= eventfilter.appminelong &&
+                            separation(event) <= eventfilter.appmaxdist
+                        ) {
+                            [y, x] = datekeys[ datestring(event) ];
+
+                            datetable[y][x]['astroevents'].push({
+                                'type' : 'conjunction',
+                                'kind' : 'approach',
+                                'time' : event.date,
+                                'body1': bodies[i],
+                                'body2': bodies[j],
+                                'dist' : separation(event),
+                                'elong': elong
+                            });
+
+                        // Kattumised või üleminekud (vahemik)
+                        } else if (data.type != 'none') {
+                            function conjunctionedge (t) { return syzygy( t, bodies[i], bodies[j] ).dist_p }
+                            eventstart = timesearch( conjunctionedge, event.AddDays(-1), event.AddDays(1), 'zero_d', true );
+                            eventend = timesearch( conjunctionedge, event.AddDays(-1), event.AddDays(1), 'zero_a', true );
+
+                            dates = daterange(eventstart, eventend);
+                            for (datekey of dates) {
+                                try { [y, x] = datekeys[datekey]; }
+                                catch(TypeError) {continue}
+
+                                //console.log(timeformat(eventstart), timeformat(eventend), data);
+
+                                datetable[y][x]['astroevents'].push({
+                                    'type' : 'conjunction',
+                                    'kind' : data.type,
+                                    'time' : event.date,
+                                    'start': eventstart.date,
+                                    'end'  : eventend.date,
+                                    'body1': data.bodies[0],
+                                    'body2': data.bodies[1],
+                                    'elong': elong
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    // -------------
+    // Tabel HTML-i
+    // -------------
+    let tablestr = '<tbody>';
+    for (let y=0; y<datetable.length; y+=1) {
+
+        tablestr += '<tr>';
+
+        for (let x=0; x<7; x+=1) {
+
+            let astroevents = datetable[y][x]['astroevents'];
+            let t0 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(0,0,0,0) );
+            let t1 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(24,0,0,0) );
+            let datekey = datestring(t0);
+
+            // Kuupäeva lahtri kujundus
+            tablestr += '<td id = "' + datekey + '" class="hoverblock" style="'
+                + (datetable[y][x]['thismonth'] ? ' background-color: ' + (datetable[y][x]['today'] ? ' #ffff0044' : (datetable[y][x]['weekend'] ? ' #66666622' : 'transparent')) + '; border: 1px solid var(--bgcolor);' : '')
+                + (datetable[y][x]['today'] ? ' font-weight: bold;' : '')
+                + '" onclick="dayclick(this.id)">';
+            
+            // Kuu faaside kujutised
+            if ( astroevents.some(event => event.type === 'moonquarter') ) {
+                event = astroevents.find((event) => event.type == 'moonquarter');
+
+                if (event.kind == 0) {
+                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" stroke="#666" fill="#000" stroke-width="1"></circle><title>Kuuloomine kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title></svg>';
+                } else if (event.kind == 1) {
+                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" fill="#000"></circle><path d="M10,5 A5,5,0,0,1,10,15 Z" fill="#fff"></path><circle cx="10" cy="10" r="5" stroke="#666" fill="none" stroke-width="1"></circle><title>Esimene veerand kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
+                } else if (event.kind == 2) {
+                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" stroke="#666" fill="#fff" stroke-width="1"></circle><title>Täiskuu kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
+                } else if (event.kind == 3) {
+                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" fill="#000"></circle><path d="M10,5 A5,5,0,0,0,10,15 Z" fill="#fff"></path><circle cx="10" cy="10" r="5" stroke="#666" fill="none" stroke-width="1"></circle><title>Viimane veerand kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
+                }
+            } else {
+                tablestr += '<div style="width: 40%; height: 50%; float: left;"></div>';
+            }
+            
+            // Kuupäeva kujundus
+            tablestr += '<div style="width: 60%; height: 50%; float: left; display: flex; justify-content: center; align-items: center;' + (datetable[y][x]['holiday'] && datetable[y][x]['thismonth'] ? ' color: #f00;' : '') + '">' + datetable[y][x]['label'] + '</div>';
+            
+            // Astronoomiasündmuste markerid
+            let astrosvg = '<svg width="' + calendarbox_width + '" height="20" style="float: left;">';
+            for (event of astroevents) {
+                if (event.type != 'moonquarter') {
+
+                    if (Object.keys(event).includes('start') && Object.keys(event).includes('end')) {
+
+                        //console.log(event.type, event.start, event.end)
+
+                        let rectstart, rectend;
+
+                        if (datestring(event.start) == datekey) {
+                            rectstart = clamp((event.start-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2);
+                            astrosvg += '<circle cx="' + clamp((event.start-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
+                        } else {
+                            rectstart = 0;
+                        }
+
+                        if (datestring(event.end) == datekey) {
+                            rectend = clamp((event.end-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2);
+                            astrosvg += '<circle cx="' + clamp((event.end-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
+                        } else {
+                            rectend = calendarbox_width;
+                        }
+                        
+                        astrosvg += '<rect x="' + rectstart + '" width="' + (rectend - rectstart).toFixed(2) + '" y="' + (6-eventmarker_radius) + '" height="' + 2*(eventmarker_radius-1) + '" fill="#080"></rect>';
+                    } else if (Object.keys(event).includes('time')) {
+                        //console.log(event.type, event.time)
+                        astrosvg += '<circle cx="' + clamp((event.time-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
+                    }
+                }
+            }
+
+            if (astrosvg == '<svg width="' + calendarbox_width + '" height="20" style="float: left;">') {
+                tablestr += '<div style="width: 100%; height: 25%; float: left;"></div><div style="width: 100%; height: 25%; float: left;"></div></td>';
+            } else {
+                tablestr += (astrosvg + '</svg>');
+            }
+        }
+
+        tablestr += '</tr>';
+    }
+
+    tablestr += '</tbody>';
+    document.getElementById("cal-days").innerHTML = tablestr;
+
+    // Set clicked day
+    if (Object.keys(datekeys).includes(selected)) {dayclick(selected, false)};
+
+    if (year < 1900) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.<br><b>NB:</b> enne 1900. aastat võib arvutustes esineda vigu.'
+        document.getElementById('cal-warning').style.display = '';
+    } else if (year < 1918 || (year == 1918 && month < 2)) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.'
+        document.getElementById('cal-warning').style.display = '';
+    } else if (year > 2099) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> pärast 2100. aastat võib arvutustes esineda vigu.'
+        document.getElementById('cal-warning').style.display = '';
+    } else {
+        document.getElementById('cal-warning').innerHTML = ''
+        document.getElementById('cal-warning').style.display = 'none';
+    }
+    
+    // Set textbox height
+    document.getElementById('day-events').style.height = document.getElementById('cal-settings').style.height = (200-(datetable.length-6)*42 - document.getElementById('cal-warning').offsetHeight) + 'px';
+
+}
+
+
+function dayclick (key, hidesettings=true) {
+
+    // Reset previous date cell
+    if (Object.keys(datekeys).includes(selected)) {document.getElementById(selected).className = 'hoverblock';}
+
+    // Format new selected cell
+    if (Object.keys(datekeys).includes(key)) {document.getElementById(key).className = 'hoverblock clicked'};
+    selected = key;
+
+
+    let data = datetable[datekeys[key][0]][datekeys[key][1]],
+        eventstring = '<div style="width: 100%; text-align: center; font-weight: bold; padding-top: 11px">Sündmused ' + timeformat(data.date,true,true,'num',true,'long',false) + ':</div>';
+
+    if (Object.keys(data.astroevents).length > 0) {
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#080"></circle></svg>Astronoomilised sündmused:</div>';
+        
+        // Sündmuste sorteerimine kellaaja järgi
+        data.astroevents.sort((a,b) => a.time - b.time);
+
+        for (event of data.astroevents) {
+            eventstring += format_astroevent(event.type, event, key);
+        }
+    } else {
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#080"></circle></svg>Astronoomilisi sündmuseid ei ole.</div>';
+    }
+
+    if (Object.keys(data.events).length > 0) {
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#c00"></circle></svg>Üritused:</div>';
+    } else {
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#c00"></circle></svg>Üritusi ei ole.</div>';
+    }
+
+    document.getElementById('day-events').innerHTML = eventstring;
+
+    if (hidesettings) {show_settings(false);}
+}
+
+
+function format_astroevent (type, data, daykey) {
+    let returnstr = '<div style="font-size: smaller; padding-left: 20px; padding-right: 10px; padding-top: 5px; display: flex; align-items: top"><div>-&ensp;</div><div> ';
+
+    // Kuu veerandid
+    if (type == 'moonquarter') {
+
+        if      (data.kind == 0) returnstr += '<b>Kuuloomine</b>';
+        else if (data.kind == 1) returnstr += '<b>Kuu esimene veerand</b>';
+        else if (data.kind == 2) returnstr += '<b>Täiskuu</b>';
+        else if (data.kind == 3) returnstr += '<b>Kuu viimane veerand</b>';
+
+        returnstr += ' kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + '. <a href="#">Lisainfo:&nbsp;Kuu&nbsp;faasid</a>';
+
+    // Apsiidid
+    } else if (type == 'apsis') {
+
+        let diststr = '';
+        if (data.dist > 1e9) {
+            diststr = numberformat(data.dist/1e9,'rel',3) + '&nbsp;mlrd&nbsp;km (' + numberformat(data.dist/Astronomy.KM_PER_AU,'rel',3) + '&nbsp;aü)';
+        } else if (data.dist > 1e6) {
+            diststr = numberformat(data.dist/1e6,'rel',3) + '&nbsp;mln&nbsp;km (' + numberformat(data.dist/Astronomy.KM_PER_AU,'rel',3) + '&nbsp;aü)';
+        } else {
+            let dist = numberformat(data.dist, 'abs', 0);
+            diststr = dist.slice(0,3) + '&nbsp;' + dist.slice(3) + '&nbsp;km';
+        }
+        
+        returnstr += '<b>' + bodies_params[data.body].gen + (data.body == 'Moon' ? (data.kind == 'p' ? ' perigee' : ' apogee') : (data.kind == 'p' ? ' periheel' : ' afeel') )
+            + '</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': kaugus ' + (data.body == 'Moon' ? ' Maast ' : ' Päikesest ' ) + diststr + '. <a href="#">Lisainfo:&nbsp;orbiidid</a>';
+
+    // Maa aastaajad
+    } else if (type == 'earthseason') {
+
+        if      (data.kind == 'mar_equinox') returnstr += '<b>Kevade algus</b>';
+        else if (data.kind == 'jun_solstice') returnstr += '<b>Suve algus</b>';
+        else if (data.kind == 'sep_equinox') returnstr += '<b>Sügise algus</b>';
+        else if (data.kind == 'dec_solstice') returnstr += '<b>Talve algus</b>';
+
+        returnstr += ' kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + '. <a href="#">Lisainfo:&nbsp;Maa&nbsp;aastaajad</a>';
+
+    // Kuuvarjutused
+    } else if (type == 'lunareclipse') {
+
+        if      (data.kind == 'total') returnstr += '<b>Täielik kuuvarjutus</b>:';
+        else if (data.kind == 'partial') returnstr += '<b>Osaline kuuvarjutus</b> (' + numberformat(100*data.obsc, 'abs', 0) + '%):';
+        else if (data.kind == 'penumbral') returnstr += '<b>Poolvarjuline kuuvarjutus</b>:';
+
+        if (datestring(data.start) == datestring(data.end)) {
+            returnstr += ' algus kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                + ', lõpp kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+        } else {
+            returnstr += ' algus ' + timeformat(data.start, false, true, 'num', false, 'long', false)
+                + ' kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                + ', lõpp ' + timeformat(data.end, false, true, 'num', false, 'long', false)
+                + ' kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+        }
+
+        returnstr += '. <a href="#">Lisainfo:&nbsp;varjutused</a>';
+
+    // Päikesevarjutused
+    } else if (type == 'solareclipse') {
+
+        if      (data.kind == 'total') returnstr += '<b>Täielik päikesevarjutus</b>:';
+        else if (data.kind == 'partial') returnstr += '<b>Osaline päikesevarjutus</b>:';
+        else if (data.kind == 'annular') returnstr += '<b>Rõngakujuline päikesevarjutus</b>:';
+
+        if (datestring(data.start) == datestring(data.end)) {
+            returnstr += ' algus kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                + ', lõpp kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+        } else {
+            returnstr += ' algus ' + timeformat(data.start, false, true, 'num', false, 'long', false)
+                + ' kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                + ', lõpp ' + timeformat(data.end, false, true, 'num', false, 'long', false)
+                + ' kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+        }
+
+        returnstr += '. <a href="#">Lisainfo:&nbsp;varjutused</a>';
+
+    // Elongatsioonid
+    } else if (type == 'elongation') {
+
+        returnstr += '<b>' + bodies_params[data.body].gen + ' elongatsioon</b> ';
+
+        if      (data.kind == 'W') returnstr += 'hommikutaevas';
+        else if (data.kind == 'E') returnstr += 'õhtutaevas';
+
+        returnstr += ': ' + numberformat(data.dist, 'abs', 1) + '° kell ' + timeformat(data.time,false,false,'num',false,'long',true,false) + '. <a href="#">Lisainfo:&nbsp;elongatsioonid</a>';
+
+    // Veenuse suurim heledus
+    } else if (type == 'peakmagnitude') {
+
+        returnstr += '<b>Veenuse suurim heledus</b> ' + (data.kind=='W' ? 'hommikutaevas' : 'õhtutaevas')
+            + ': ' + numberformat(data.mag, 'abs', 1) + '&nbsp;mag kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + '. <a href="#">Lisainfo:&nbsp;elongatsioonid</a>';
+    
+    // Vastasseisud (lihtne)
+    } else if (type == 'opposition') {
+
+        let diststr = '';
+        if (data.dist > 6.7) {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e9, 'rel', 3) + '&nbsp;mlrd&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        } else {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e6, 'rel', 3) + '&nbsp;mln&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        }
+
+        returnstr += '<b>' + bodies_params[data.body].gen + ' vastasseis</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': kaugus Maast ' + diststr + ', heledus ' + numberformat(data.mag, 'abs', 1)
+            + '&nbsp;mag. <a href="#">Lisainfo:&nbsp;vastasseisud</a>';
+
+    // Vastasseisud (detailne) - vähim kaugus
+    } else if (type == 'opposition_dist') {
+
+        let diststr = '';
+        if (data.dist > 6.7) {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e9, 'rel', 3) + '&nbsp;mlrd&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        } else {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e6, 'rel', 3) + '&nbsp;mln&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        }
+
+        returnstr += '<b>' + bodies_params[data.body].gen + ' lähim asend</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': kaugus Maast ' + diststr + '. <a href="#">Lisainfo:&nbsp;vastasseisud</a>';
+
+    // Vastasseisud (detailne) - suurim elongatsioon
+    } else if (type == 'opposition_elong') {
+
+        returnstr += '<b>' + bodies_params[data.body].gen + ' vastasseis</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': heledus ' + numberformat(data.mag, 'abs', 1) + '&nbsp;mag, faasinurk '
+            + numberformat(data.ang, 'abs', 1) + '°. <a href="#">Lisainfo:&nbsp;vastasseisud</a>';
+
+    // Ühendused Päikesega (lihtne)
+    } else if (type == 'conjunction' && (data.kind).endsWith('erior')) {
+
+        let diststr = '',
+            eventtype = '';
+        if (data.dist > 6.7) {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e9, 'rel', 3) + '&nbsp;mlrd&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        } else {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e6, 'rel', 3) + '&nbsp;mln&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        }
+
+        if (data.body == 'Mercury' || data.body == 'Venus') {
+            eventtype = data.kind == 'inferior' ? ' alumine ühendus' : ' ülemine ühendus';
+        } else {
+            eventtype = ' ühendus Päikesega';
+        }
+
+        returnstr += '<b>' + bodies_params[data.body].gen + eventtype + '</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': elongatsioon ' + ( data.ang > 1 ? numberformat(data.ang, 'rel', 2) + '°' : numberformat(60*data.ang, 'rel', 2) + "'" )+ ', kaugus Maast ' + diststr 
+            + '. <a href="#">Lisainfo:&nbsp;ühendused</a>';
+
+    // Ühendused (detailne) - suurim/vähim kaugus
+    } else if (type == 'conjunction_dist') {
+
+        let diststr = '';
+        if (data.dist > 6.7) {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e9, 'rel', 3) + '&nbsp;mlrd&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        } else {
+            diststr = numberformat(data.dist*Astronomy.KM_PER_AU/1e6, 'rel', 3) + '&nbsp;mln&nbsp;km (' + numberformat(data.dist, 'rel', 3) + '&nbsp;aü)';
+        }
+
+        returnstr += '<b>' + bodies_params[data.body].gen + (data.kind == 'inferior' ? ' vähim' : ' suurim')
+            + ' kaugus</b> Maast: ' + diststr + ' kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + '. <a href="#">Lisainfo:&nbsp;ühendused</a>';
+
+    // Ühendused (detailne) - vähim elongatsioon
+    } else if (type == 'conjunction_elong') {
+
+        let eventtype = '';
+
+        if (data.body == 'Mercury' || data.body == 'Venus') {
+            eventtype = data.kind == 'inferior' ? ' alumine ühendus' : ' ülemine ühendus';
+        } else {
+            eventtype = ' ühendus Päikesega';
+        }
+
+        returnstr += '<b>' + bodies_params[data.body].gen + eventtype + '</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ': elongatsioon ' + ( data.ang > 1 ? numberformat(data.ang, 'rel', 2) + '°' : numberformat(60*data.ang, 'rel', 2) + "'" ) + '. <a href="#">Lisainfo:&nbsp;ühendused</a>';
+
+    // Kvadratuurid
+    } else if (type == 'quadrature') {
+
+        returnstr += '<b>' + bodies_params[data.body].gen;
+
+        if      (data.kind == 'W') returnstr += ' lääne';
+        else if (data.kind == 'E') returnstr += ' ida';
+
+        returnstr += 'kvadratuur</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + ', faasinurk&nbsp;' + numberformat(data.ang, 'abs', 1) + '°. <a href="#">Lisainfo:&nbsp;kvadratuurid</a>';
+
+    // Retrograadid
+    } else if (type == 'retrograde') {
+
+        returnstr += '<b>' + bodies_params[data.body].gen + ' retrograadi ' + (data.kind == 'start' ? 'algus' : 'lõpp')
+            + '</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+            + '. <a href="#">Lisainfo:&nbsp;retrograadid</a>';
+
+    // Üldised ühendused
+    } else if (type == 'conjunction') {
+
+        // Lähenemised
+        if (data.kind == 'approach'){
+            returnstr += '<b>' + bodies_params[data.body1].gen + ' ja ' + bodies_params[data.body2].gen
+                + ' ühendus</b> kell ' + timeformat(data.time,false,false,'num',false,'long',true,false)
+                + ': kaugus ' + ( data.dist > 1 ? numberformat(data.dist, 'rel', 2) + '°' : numberformat(60*data.dist, 'rel', 2) + "'" );
+
+            if (data.body1 != "Sun" && data.body2 != "Sun") {
+                returnstr += ', elongatsioon ' + (data.elong < 10 ? numberformat(data.elong, 'abs', 1) : numberformat(data.elong, 'abs', 0)) + '°'
+            }
+        
+        // Kattumised ja üleminekud
+        } else {
+            if (data.kind == 'occultation_c') {
+                returnstr += '<b>' + bodies_params[data.body2].gen + ' kattumine ' + bodies_params[data.body1].with + '</b>'
+                    + (data.body1 == 'Sun' ? ' (ülemine ühendus):' : ':');
+            } else if (data.kind == 'occultation_p') {
+                returnstr += '<b>' + bodies_params[data.body2].gen + ' osaline kattumine ' + bodies_params[data.body1].with + '</b>'
+                    + (data.body1 == 'Sun' ? ' (ülemine ühendus):' : ':');
+            } else if (data.kind.startsWith('transit')) {
+                returnstr += '<b>' + bodies_params[data.body1].gen + ' üleminek ' + bodies_params[data.body2].from + '</b>'
+                    + (data.body2 == 'Sun' && eventfilter.conjunctions ? ' (alumine ühendus):' : ':');
+            }
+            
+            if (datestring(data.start) == datestring(data.end)) {
+                returnstr += ' algus kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                    + ', lõpp kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+            } else {
+                returnstr += ' algus ' + timeformat(data.start, false, true, 'num', false, 'long', false)
+                    + ' kell ' + timeformat(data.start, false, false, 'num', false, 'long', true, false)
+                    + ', lõpp ' + timeformat(data.end, false, true, 'num', false, 'long', false)
+                    + ' kell ' + timeformat(data.end, false, false, 'num', false, 'long', true, false);
+            }
+
+            if (data.body1 != "Sun" && data.body2 != "Sun") {
+                returnstr += ', elongatsioon ' + (data.elong < 10 ? numberformat(data.elong, 'abs', 1) : numberformat(data.elong, 'abs', 0)) + '°'
+            }
+
+        }
+
+        returnstr += '. <a href="#">Lisainfo:&nbsp;ühendused</a>';
+
+    } else {
+        returnstr += type;
+    }
+
+    return returnstr + '.</div></div>'
+}
+
+
+// ----------
+// Page load
+// ----------
+build_calendar(cal_month, cal_year);
+dayclick(datestring(today));
+show_settings(false);
+
+
+// ----------------
+// Extra functions
+// ----------------
+function show_settings (val) {
+    if (val) {
+        document.getElementById('cal-settings-toggle').innerHTML = 'Näita päeva sündmuseid';
+        document.getElementById('cal-settings').style.display = '';
+        document.getElementById('day-events').style.display = 'none';
+    } else {
+        document.getElementById('cal-settings-toggle').innerHTML = 'Näita sündmuste seadeid ja filtreid';
+        document.getElementById('cal-settings').style.display = 'none';
+        document.getElementById('day-events').style.display = '';
+    }
+
+    settings_on = val;
+}
+
+</script>
+
+</html>
