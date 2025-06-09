@@ -786,7 +786,7 @@ function build_calendar (month, year) {
                 if (event > starttime && event < endtime) {
                     [y, x] = datekeys[ datestring(event) ];
 
-                    data = Astronomy.Illumination(planet, eventtime);
+                    data = Astronomy.Illumination(planet, event);
 
                     datetable[y][x]['astroevents'].push({
                         'type' : 'opposition',
