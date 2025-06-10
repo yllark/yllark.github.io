@@ -12,7 +12,7 @@
 
 </head>
 
-<body style="background-color: transparent; margin: 0px;">
+<body id="mainbody" style="background-color: transparent; color: '#444'; margin: 0px;" onresize="calc()">
   <table style="width: 100%">
     <tbody>
       <tr>
@@ -20,7 +20,7 @@
         <td style="width: 70%">Mingi muu tekst</td>
       </tr>
       <tr>
-        <td>Alumine ruut</td>
+        <td id="sizesinfo">Algtekst</td>
         <td>Neljas ruut</td>
       </tr>
     </tbody>
@@ -28,6 +28,9 @@
 </body>
 
 <script>
+  function calc () {
+    document.getElementById('sizesinfo').innerHTML = 'w = ' + document.getElementById('mainbody').offsetWidth + ', h = ' + document.getElementById('mainbody').offsetHeight + ' px';
+  }
 </script>
 
 </html>
