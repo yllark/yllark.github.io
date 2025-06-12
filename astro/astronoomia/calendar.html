@@ -579,8 +579,8 @@ function build_calendar (month, year) {
         event = Astronomy.SearchGlobalSolarEclipse(starttime.AddDays(-1));
         function partialedge(t) { return syzygy(t, 'Moon', 'Sun').dist_p; }
         function centraledge(t) { return syzygy(t, 'Moon', 'Sun').dist_c; }
-        eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date;
-        eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date;
+        eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true );
+        eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true );
 
         while (eventstart < endtime && eventend > starttime) {
 
@@ -606,8 +606,8 @@ function build_calendar (month, year) {
             }
 
             event = Astronomy.NextGlobalSolarEclipse(event.peak);
-            eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date;
-            eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date;
+            eventstart = timesearch( partialedge, event.peak.AddDays(-1), event.peak, 'zero_d', true );
+            eventend = timesearch( partialedge, event.peak, event.peak.AddDays(1), 'zero_a', true );
         }
     }
 
