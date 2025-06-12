@@ -600,8 +600,8 @@ function build_calendar (month, year) {
                     'time' : event.peak.date,
                     'start': eventstart.date,
                     'end' :  eventend.date,
-                    'c2' :   event.kind == 'partial' ? undefined : timesearch( centraledge, event.peak.AddDays(-1), event.peak, 'zero_d', true ).date,
-                    'c3' :   event.kind == 'partial' ? undefined : timesearch( centraledge, event.peak, event.peak.AddDays(1), 'zero_a', true ).date
+                    'c2' :   event.kind == 'partial' ? undefined : timesearch( centraledge, eventstart, event.peak, 'zero_d', true, 0.01 ).date,
+                    'c3' :   event.kind == 'partial' ? undefined : timesearch( centraledge, event.peak, eventend, 'zero_a', true, 0.01 ).date
                 });
             }
 
