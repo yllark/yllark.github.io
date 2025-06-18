@@ -72,7 +72,7 @@
 
 </head>
 
-<body id="cal-body" style="background-color: transparent; margin: 0px;" onresize="draw_cal();">
+<body id="calbody" style="background-color: transparent; margin: 0px;" onresize="draw_cal();">
     
     <h1 style="display: none;">Kalender:</h1>
     
@@ -1319,7 +1319,7 @@ function show_settings (val) {
 function draw_cal (calc_events=false, month=null, year=null) {
 
     // Põhimõõdud
-    const body_w = document.getElementById('cal-body').clientWidth;
+    const body_w = document.getElementById('calbody').clientWidth;
 
     let datebox_w = Math.max( Math.floor(body_w/7), 30 ),       // 1/7 kogulaiusest, min 30 px
         datebox_h = clamp( Math.floor(body_w*4/35), 40,   60 ), // laius/kõrgus 5/4, min 40 px, max 60 px
