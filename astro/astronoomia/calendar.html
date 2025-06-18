@@ -19,6 +19,7 @@
     * {
         font-family: 'Roboto', sans-serif;
         color: var(--textcolor);
+        box-sizing: border-box;
     }
 
     /* Kursorile reageerivad elemendid */
@@ -60,8 +61,6 @@
 
     /* Tabeliväljade vaikimisi kujundus */
     td, th {
-        width: 50px;
-        height: 40px;
         padding: 0px;
     }
 
@@ -73,31 +72,26 @@
 
 </head>
 
-<body style="background-color: transparent; margin: 0px;">
+<body id="cal-body" style="background-color: transparent; margin: 0px;" onresize="draw_cal();">
     
     <h1 style="display: none;">Kalender:</h1>
     
     <!-- Kalendri tabel -->
-    <table style="border-collapse: separate; border-spacing: 0px;">
+    <table id="cal-main" style="border-collapse: separate; border-spacing: 0px;">
     
         <!-- Kalendri päis -->
         <tbody>
         
             <!-- Navigatsioon -->
-            <tr>
+            <tr id="cal-head-row">
             
                 <!-- Eelmine kuu -->
                 <th
                     class="hoverblock"
-                    style="
-                        width: 52px;
-                        border-top-left-radius: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
+                    style="border-top-left-radius: 20px;"
                     onclick="
-                        build_calendar(
+                        draw_cal(
+                            true,
                             Number(document.getElementById('cal-month').value)-1,
                             Number(document.getElementById('cal-year').value)
                         )
@@ -120,7 +114,8 @@
                         max="2999"
                         step="1"
                         onchange="
-                            build_calendar(
+                            draw_cal(
+                                true,
                                 Number(document.getElementById('cal-month').value),
                                 Number(this.value)
                             )
@@ -132,7 +127,8 @@
                     <select
                         id="cal-month"
                         onchange="
-                            build_calendar(
+                            draw_cal(
+                                true,
                                 Number(this.value),
                                 Number(document.getElementById('cal-year').value)
                             )
@@ -157,15 +153,10 @@
                 <!-- Järgmine kuu -->
                 <th
                     class="hoverblock"
-                    style="
-                        width: 52px;
-                        border-top-right-radius: 20px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    "
+                    style="border-top-right-radius: 20px;"
                     onclick="
-                        build_calendar(
+                        draw_cal(
+                            true,
                             Number(document.getElementById('cal-month').value)+1,
                             Number(document.getElementById('cal-year').value)
                         )
@@ -178,7 +169,7 @@
             </tr>
         
             <!-- Nädalapäevad -->
-            <tr style="background-color: var(--bgcolor);">
+            <tr id="cal-wd-row" style="background-color: var(--bgcolor);">
                 <th>E</th>
                 <th>T</th>
                 <th>K</th>
@@ -202,7 +193,6 @@
     <div
         id="cal-warning"
         style="
-            width: 344px;
             padding: 10px;
             font-size: smaller;
             background-color: var(--bgcolor);
@@ -215,7 +205,6 @@
         id="cal-settings-toggle"
         class="hoverblock"
         style="
-            width: 344px;
             padding: 10px;
             font-size: smaller;
         "
@@ -227,8 +216,6 @@
     <div
         id="cal-settings"
         style="
-            height: 200px;
-            width: 324px;
             border: 20px solid var(--bgcolor);
             border-top: 10px solid var(--bgcolor);
             border-bottom-left-radius: 20px;
@@ -240,44 +227,44 @@
         >
 
         <span style="font-size: initial; font-weight: bold;">Sündmuste filtrid</span><br>
-        &emsp;<input type="checkbox" id="cal-earthseasons" onchange="eventfilter.earthseasons = this.checked; build_calendar(cal_month, cal_year);"> Maa aastaajad<br>
-        &emsp;<input type="checkbox" id="cal-moonphases" onchange="eventfilter.moonphases = this.checked; build_calendar(cal_month, cal_year);"> Kuu faasid<br>
-        &emsp;<input type="checkbox" id="cal-eclipses" onchange="eventfilter.eclipses = this.checked; build_calendar(cal_month, cal_year);"> Päikese- ja kuuvarjutused<br>
+        &emsp;<input type="checkbox" id="cal-earthseasons" onchange="eventfilter.earthseasons = this.checked; draw_cal(true, cal_month, cal_year);"> Maa aastaajad<br>
+        &emsp;<input type="checkbox" id="cal-moonphases" onchange="eventfilter.moonphases = this.checked; draw_cal(true, cal_month, cal_year);"> Kuu faasid<br>
+        &emsp;<input type="checkbox" id="cal-eclipses" onchange="eventfilter.eclipses = this.checked; draw_cal(true, cal_month, cal_year);"> Päikese- ja kuuvarjutused<br>
 
         &emsp;<b>Apsiidid:</b><br>
-        &emsp;&emsp;<input type="checkbox" id="cal-earthapsides" onchange="eventfilter.earthapsides = this.checked; build_calendar(cal_month, cal_year);"> Maa
-              &emsp;<input type="checkbox" id="cal-moonapsides" onchange="eventfilter.moonapsides = this.checked; build_calendar(cal_month, cal_year);"> Kuu
-              &emsp;<input type="checkbox" id="cal-planetapsides" onchange="eventfilter.planetapsides = this.checked; build_calendar(cal_month, cal_year);"> planeedid<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-earthapsides" onchange="eventfilter.earthapsides = this.checked; draw_cal(true, cal_month, cal_year);"> Maa
+              &emsp;<input type="checkbox" id="cal-moonapsides" onchange="eventfilter.moonapsides = this.checked; draw_cal(true, cal_month, cal_year);"> Kuu
+              &emsp;<input type="checkbox" id="cal-planetapsides" onchange="eventfilter.planetapsides = this.checked; draw_cal(true, cal_month, cal_year);"> planeedid<br>
 
         &emsp;<b>Planeetide</b><br>
-        &emsp;&emsp;<input type="checkbox" id="cal-conjunctions" onchange="eventfilter.conjunctions = this.checked; build_calendar(cal_month, cal_year);"> ühendused Päikesega<br>
-        &emsp;&emsp;<input type="checkbox" id="cal-retrogrades" onchange="eventfilter.retrogrades = this.checked; build_calendar(cal_month, cal_year);"> retrograadid<br>
-        &emsp;&emsp;<input type="checkbox" id="cal-approaches" onchange="eventfilter.approaches = this.checked; build_calendar(cal_month, cal_year);"> ühendused omavahel ja Kuuga<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-conjunctions" onchange="eventfilter.conjunctions = this.checked; draw_cal(true, cal_month, cal_year);"> ühendused Päikesega<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-retrogrades" onchange="eventfilter.retrogrades = this.checked; draw_cal(true, cal_month, cal_year);"> retrograadid<br>
+        &emsp;&emsp;<input type="checkbox" id="cal-approaches" onchange="eventfilter.approaches = this.checked; draw_cal(true, cal_month, cal_year);"> ühendused omavahel ja Kuuga<br>
 
         &emsp;&emsp;<b>Siseplaneetide</b> (Merkuur, Veenus)<br>
-        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-transits" onchange="eventfilter.transits = this.checked; build_calendar(cal_month, cal_year);"> üleminekud Päikesest<br>
-        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-elongations" onchange="eventfilter.elongations = this.checked; build_calendar(cal_month, cal_year);"> elongatsioonid<br>
-        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-peakmagnitude" onchange="eventfilter.peakmagnitude = this.checked; build_calendar(cal_month, cal_year);"> Veenuse suurim heledus<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-transits" onchange="eventfilter.transits = this.checked; draw_cal(true, cal_month, cal_year);"> üleminekud Päikesest<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-elongations" onchange="eventfilter.elongations = this.checked; draw_cal(true, cal_month, cal_year);"> elongatsioonid<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-peakmagnitude" onchange="eventfilter.peakmagnitude = this.checked; draw_cal(true, cal_month, cal_year);"> Veenuse suurim heledus<br>
 
         &emsp;&emsp;<b>Välisplaneetide</b> (Marss–Neptuun)<br>
-        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-oppositions" onchange="eventfilter.oppositions = this.checked; build_calendar(cal_month, cal_year);"> vastasseisud<br>
-        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-quadratures" onchange="eventfilter.quadratures = this.checked; build_calendar(cal_month, cal_year);"> kvadratuurid
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-oppositions" onchange="eventfilter.oppositions = this.checked; draw_cal(true, cal_month, cal_year);"> vastasseisud<br>
+        &emsp;&emsp;&emsp;<input type="checkbox" id="cal-quadratures" onchange="eventfilter.quadratures = this.checked; draw_cal(true, cal_month, cal_year);"> kvadratuurid
         <br><br>
 
         <span style="font-size: initial; font-weight: bold;">Sündmuste seaded</span><br>
-        &emsp;Kuu faasid <select id="cal-moonphasetype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.moonphasetype = this.value; build_calendar(cal_month, cal_year);"><option value="ecl">ekliptiliselt</option><option value="geom">geomeetriliselt</option></select><br>
-        &emsp;Ühendused Päikesega ja vastasseisud <select id="cal-oppcontype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.oppcontype = this.value; build_calendar(cal_month, cal_year);"><option value="ecl">ekl.</option><option value="geom">geom.</option></select><br>
-        &emsp;Ühenduste vähim elongatsioon: <input type="number" id="cal-appminelong" dir="rtl" min="1" max="90" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appminelong = Number(this.value); build_calendar(cal_month, cal_year);">°<br>
-        &emsp;Ühenduste suurim kaugus: <input type="number" id="cal-appmaxdist" dir="rtl" min="1" max="20" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appmaxdist = Number(this.value); build_calendar(cal_month, cal_year);">°<br><br>
+        &emsp;Kuu faasid <select id="cal-moonphasetype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.moonphasetype = this.value; draw_cal(true, cal_month, cal_year);"><option value="ecl">ekliptiliselt</option><option value="geom">geomeetriliselt</option></select><br>
+        &emsp;Ühendused Päikesega ja vastasseisud <select id="cal-oppcontype" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.oppcontype = this.value; draw_cal(true, cal_month, cal_year);"><option value="ecl">ekl.</option><option value="geom">geom.</option></select><br>
+        &emsp;Ühenduste vähim elongatsioon: <input type="number" id="cal-appminelong" dir="rtl" min="1" max="90" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appminelong = Number(this.value); draw_cal(true, cal_month, cal_year);">°<br>
+        &emsp;Ühenduste suurim kaugus: <input type="number" id="cal-appmaxdist" dir="rtl" min="1" max="20" step="1" style="margin: 0px; vertical-align: baseline;" onchange="eventfilter.appmaxdist = Number(this.value); draw_cal(true, cal_month, cal_year);">°<br><br>
 
         <span style="font-size: initial; font-weight: bold;">Planeetide filter</span><br>
-        &emsp;<input type="checkbox" id="cal-mercury" onchange="planetfilter.Mercury = this.checked; build_calendar(cal_month, cal_year);"> Merkuur
-        &emsp;<input type="checkbox" id="cal-venus" onchange="planetfilter.Venus = this.checked; build_calendar(cal_month, cal_year);"> Veenus
-        &emsp;<input type="checkbox" id="cal-mars" onchange="planetfilter.Mars = this.checked; build_calendar(cal_month, cal_year);"> Marss<br>
-        &emsp;<input type="checkbox" id="cal-jupiter" onchange="planetfilter.Jupiter = this.checked; build_calendar(cal_month, cal_year);"> Jupiter
-        &emsp;<input type="checkbox" id="cal-saturn" onchange="planetfilter.Saturn = this.checked; build_calendar(cal_month, cal_year);"> Saturn
-        &emsp;<input type="checkbox" id="cal-uranus" onchange="planetfilter.Uranus = this.checked; build_calendar(cal_month, cal_year);"> Uraan
-        &emsp;<input type="checkbox" id="cal-neptune" onchange="planetfilter.Neptune = this.checked; build_calendar(cal_month, cal_year);"> Neptuun
+        &emsp;<input type="checkbox" id="cal-mercury" onchange="planetfilter.Mercury = this.checked; draw_cal(true, cal_month, cal_year);"> Merkuur
+        &emsp;<input type="checkbox" id="cal-venus" onchange="planetfilter.Venus = this.checked; draw_cal(true, cal_month, cal_year);"> Veenus
+        &emsp;<input type="checkbox" id="cal-mars" onchange="planetfilter.Mars = this.checked; draw_cal(true, cal_month, cal_year);"> Marss<br>
+        &emsp;<input type="checkbox" id="cal-jupiter" onchange="planetfilter.Jupiter = this.checked; draw_cal(true, cal_month, cal_year);"> Jupiter
+        &emsp;<input type="checkbox" id="cal-saturn" onchange="planetfilter.Saturn = this.checked; draw_cal(true, cal_month, cal_year);"> Saturn
+        &emsp;<input type="checkbox" id="cal-uranus" onchange="planetfilter.Uranus = this.checked; draw_cal(true, cal_month, cal_year);"> Uraan
+        &emsp;<input type="checkbox" id="cal-neptune" onchange="planetfilter.Neptune = this.checked; draw_cal(true, cal_month, cal_year);"> Neptuun
 
 
     </div>
@@ -286,8 +273,6 @@
     <div
         id="day-events"
         style="
-            height: 200px;
-            width: 324px;
             border: 20px solid var(--bgcolor);
             border-top: 10px solid var(--bgcolor);
             border-bottom-left-radius: 20px;
@@ -301,8 +286,8 @@
 
 <!--Skriptid-->
 <!-- Veebis -->
-    <script src="../external-scripts/astronomy.browser.min.js"></script>
-    <script src="../external-scripts/common.js"></script>
+<script src="../external-scripts/astronomy.browser.min.js"></script>
+<script src="../external-scripts/common.js"></script>
 
 
 <!-- Lokaal
@@ -312,17 +297,14 @@
 
 <!--Veebilehe skript-->
 <script>
-const   eventmarker_radius = 3,
-        calendarbox_width = 50;
+let settings_on,
     
-let today = new Date(),
-
-    settings_on = false,
+    today = new Date(),
     cal_month = today.getMonth(),
     cal_year = today.getFullYear(),
 
-    datetable = [[{},{},{},{},{},{},{}]],
-    datekeys = {},
+    datetable,
+    datekeys,
     selected,
 
     eventfilter = {
@@ -358,7 +340,7 @@ let today = new Date(),
     };
 
 
-// Algseadistus
+// Sündmuste filtrite ja seadete algseadistus
 for (const [key, value] of Object.entries(eventfilter)) {
     if (typeof value == 'boolean') {
         document.getElementById('cal-'+key).checked = value;
@@ -366,6 +348,7 @@ for (const [key, value] of Object.entries(eventfilter)) {
         document.getElementById('cal-'+key).value = value;
     }
 }
+
 for (const [key, value] of Object.entries(planetfilter)) {
     if (key != 'Moon') {
         document.getElementById('cal-'+key.toLowerCase()).checked = value;
@@ -382,8 +365,8 @@ function build_calendar (month, year) {
     datekeys = {};
 
     let currentrow = 0,
-        datekey = '',
-        day = 0,
+        datekey,
+        day,
 
         // Kuu esimene päev
         date = new Date(year, month, 1, 12),
@@ -417,7 +400,7 @@ function build_calendar (month, year) {
             'today' :       date.getDate() == today.getDate() && date.getMonth() == today.getMonth() && date.getFullYear() == today.getFullYear(),
             'selected' :    datestring(date) == selected,
             'events' :      [],         // TODO
-            'astroevents' : []          // TODO
+            'astroevents' : []
         };
 
         datekey = datestring(date);
@@ -451,7 +434,6 @@ function build_calendar (month, year) {
     // ---------------------
     let events, event, eventstart, eventend, eventdate, dates, x, y,
         bodies, planet, data;
-
 
     // Kuu veerandid (hetk)
     if (eventfilter.moonphases) {
@@ -587,6 +569,9 @@ function build_calendar (month, year) {
             if (event.kind == 'partial') {
                 // TODO obscuration for partial
             }
+
+            console.log(centraledge(eventstart), centraledge(event.peak), centraledge(eventend));
+            console.log(partialedge(eventstart), partialedge(event.peak), partialedge(eventend));
 
             dates = daterange(eventstart, eventend);
             for (datekey of dates) {
@@ -733,7 +718,6 @@ function build_calendar (month, year) {
     }
 
 
-
     // ---------------
     // Välisplaneedid
     // ---------------
@@ -819,8 +803,6 @@ function build_calendar (month, year) {
             }
         }
     }
-
-
     // ---------------
     // Kõik planeedid
     // ---------------
@@ -1018,115 +1000,6 @@ function build_calendar (month, year) {
             }
         }
     }
-
-
-    // -------------
-    // Tabel HTML-i
-    // -------------
-    let tablestr = '<tbody>';
-    for (let y=0; y<datetable.length; y+=1) {
-
-        tablestr += '<tr>';
-
-        for (let x=0; x<7; x+=1) {
-
-            let astroevents = datetable[y][x]['astroevents'];
-            let t0 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(0,0,0,0) );
-            let t1 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(24,0,0,0) );
-            let datekey = datestring(t0);
-
-            // Kuupäeva lahtri kujundus
-            tablestr += '<td id = "' + datekey + '" class="hoverblock" style="'
-                + (datetable[y][x]['thismonth'] ? ' background-color: ' + (datetable[y][x]['today'] ? ' #ffff0044' : (datetable[y][x]['weekend'] ? ' #66666622' : 'transparent')) + '; border: 1px solid var(--bgcolor);' : '')
-                + (datetable[y][x]['today'] ? ' font-weight: bold;' : '')
-                + '" onclick="dayclick(this.id)">';
-            
-            // Kuu faaside kujutised
-            if ( astroevents.some(event => event.type === 'moonquarter') ) {
-                event = astroevents.find((event) => event.type == 'moonquarter');
-
-                if (event.kind == 0) {
-                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" stroke="#666" fill="#000" stroke-width="1"></circle><title>Kuuloomine kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title></svg>';
-                } else if (event.kind == 1) {
-                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" fill="#000"></circle><path d="M10,5 A5,5,0,0,1,10,15 Z" fill="#fff"></path><circle cx="10" cy="10" r="5" stroke="#666" fill="none" stroke-width="1"></circle><title>Esimene veerand kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
-                } else if (event.kind == 2) {
-                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" stroke="#666" fill="#fff" stroke-width="1"></circle><title>Täiskuu kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
-                } else if (event.kind == 3) {
-                    tablestr += '<svg width="20" height="20" style="float: left;"><circle cx="10" cy="10" r="5" fill="#000"></circle><path d="M10,5 A5,5,0,0,0,10,15 Z" fill="#fff"></path><circle cx="10" cy="10" r="5" stroke="#666" fill="none" stroke-width="1"></circle><title>Viimane veerand kell ' + timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title><</svg>';
-                }
-            } else {
-                tablestr += '<div style="width: 40%; height: 50%; float: left;"></div>';
-            }
-            
-            // Kuupäeva kujundus
-            tablestr += '<div style="width: 60%; height: 50%; float: left; display: flex; justify-content: center; align-items: center;' + (datetable[y][x]['holiday'] && datetable[y][x]['thismonth'] ? ' color: #f00;' : '') + '">' + datetable[y][x]['label'] + '</div>';
-            
-            // Astronoomiasündmuste markerid
-            let astrosvg = '<svg width="' + calendarbox_width + '" height="20" style="float: left;">';
-            for (event of astroevents) {
-                if (event.type != 'moonquarter') {
-
-                    if (Object.keys(event).includes('start') && Object.keys(event).includes('end')) {
-
-                        //console.log(event.type, event.start, event.end)
-
-                        let rectstart, rectend;
-
-                        if (datestring(event.start) == datekey) {
-                            rectstart = clamp((event.start-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2);
-                            astrosvg += '<circle cx="' + clamp((event.start-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
-                        } else {
-                            rectstart = 0;
-                        }
-
-                        if (datestring(event.end) == datekey) {
-                            rectend = clamp((event.end-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2);
-                            astrosvg += '<circle cx="' + clamp((event.end-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
-                        } else {
-                            rectend = calendarbox_width;
-                        }
-                        
-                        astrosvg += '<rect x="' + rectstart + '" width="' + (rectend - rectstart).toFixed(2) + '" y="' + (6-eventmarker_radius) + '" height="' + 2*(eventmarker_radius-1) + '" fill="#080"></rect>';
-                    } else if (Object.keys(event).includes('time')) {
-                        //console.log(event.type, event.time)
-                        astrosvg += '<circle cx="' + clamp((event.time-t0)/(t1-t0)*calendarbox_width, eventmarker_radius, calendarbox_width-eventmarker_radius).toFixed(2) + '" cy="5" r="' + eventmarker_radius + '" fill="#080"></circle>';
-                    }
-                }
-            }
-
-            if (astrosvg == '<svg width="' + calendarbox_width + '" height="20" style="float: left;">') {
-                tablestr += '<div style="width: 100%; height: 25%; float: left;"></div><div style="width: 100%; height: 25%; float: left;"></div></td>';
-            } else {
-                tablestr += (astrosvg + '</svg>');
-            }
-        }
-
-        tablestr += '</tr>';
-    }
-
-    tablestr += '</tbody>';
-    document.getElementById("cal-days").innerHTML = tablestr;
-
-    // Set clicked day
-    if (Object.keys(datekeys).includes(selected)) {dayclick(selected, false)};
-
-    if (year < 1900) {
-        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.<br><b>NB:</b> enne 1900. aastat võib arvutustes esineda vigu.'
-        document.getElementById('cal-warning').style.display = '';
-    } else if (year < 1918 || (year == 1918 && month < 2)) {
-        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.'
-        document.getElementById('cal-warning').style.display = '';
-    } else if (year > 2099) {
-        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> pärast 2100. aastat võib arvutustes esineda vigu.'
-        document.getElementById('cal-warning').style.display = '';
-    } else {
-        document.getElementById('cal-warning').innerHTML = ''
-        document.getElementById('cal-warning').style.display = 'none';
-    }
-    
-    // Set textbox height
-    document.getElementById('day-events').style.height = document.getElementById('cal-settings').style.height = (200-(datetable.length-6)*42 - document.getElementById('cal-warning').offsetHeight) + 'px';
-
 }
 
 
@@ -1144,7 +1017,7 @@ function dayclick (key, hidesettings=true) {
         eventstring = '<div style="width: 100%; text-align: center; font-weight: bold; padding-top: 11px">Sündmused ' + timeformat(data.date,true,true,'num',true,'long',false) + ':</div>';
 
     if (Object.keys(data.astroevents).length > 0) {
-        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#080"></circle></svg>Astronoomilised sündmused:</div>';
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="3" fill="#080"></circle></svg>Astronoomilised sündmused:</div>';
         
         // Sündmuste sorteerimine kellaaja järgi
         data.astroevents.sort((a,b) => a.time - b.time);
@@ -1153,13 +1026,13 @@ function dayclick (key, hidesettings=true) {
             eventstring += format_astroevent(event.type, event, key);
         }
     } else {
-        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#080"></circle></svg>Astronoomilisi sündmuseid ei ole.</div>';
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="3" fill="#080"></circle></svg>Astronoomilisi sündmuseid ei ole.</div>';
     }
 
     if (Object.keys(data.events).length > 0) {
-        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#c00"></circle></svg>Üritused:</div>';
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="3" fill="#c00"></circle></svg>Üritused:</div>';
     } else {
-        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="' + eventmarker_radius + '" fill="#c00"></circle></svg>Üritusi ei ole.</div>';
+        eventstring += '<div style="font-size: smaller; font-weight: bold; padding-top: 14px; display: flex; align-items: center;"><svg width="20" height="16"><circle cx="10" cy="8" r="3" fill="#c00"></circle></svg>Üritusi ei ole.</div>';
     }
 
     document.getElementById('day-events').innerHTML = eventstring;
@@ -1421,7 +1294,7 @@ function format_astroevent (type, data, daykey) {
 // ----------
 // Page load
 // ----------
-build_calendar(cal_month, cal_year);
+draw_cal(true, cal_month, cal_year);
 dayclick(datestring(today));
 show_settings(false);
 
@@ -1441,6 +1314,173 @@ function show_settings (val) {
     }
 
     settings_on = val;
+}
+
+function draw_cal (calc_events=false, month=null, year=null) {
+
+    // Põhimõõdud
+    const body_w = document.getElementById('cal-body').clientWidth;
+
+    let datebox_w = Math.max( Math.floor(body_w/7), 30 ),       // 1/7 kogulaiusest, min 30 px
+        datebox_h = clamp( Math.floor(body_w*4/35), 40,   60 ), // laius/kõrgus 5/4, min 40 px, max 60 px
+        total_h =   clamp( Math.round(body_w*5/3), 600, 1000 ), // laius/kõrgus 3/5, min 600 px, max 1000 px
+
+        eventrow_h = Math.round(datebox_h/4),   // 1/4 lahtri kõrgusest
+        marker_r = Math.round(0.3*eventrow_h),  // 0,3 sündmusrea kõrgusest
+
+        tablestr = '<tbody>';
+
+    // Tabeli päise read ja veerud õigesse mõõtu
+    document.getElementById('cal-head-row').style.height = datebox_h + 'px';
+    document.getElementById('cal-wd-row').style.height = datebox_h + 'px';
+
+    // Vajadusel arvuta sündmused
+    if (calc_events) {
+        document.getElementById("cal-days").innerHTML = '<tbody><tr><th colspan=7 rowspan=6 style="width: '
+             +(7*datebox_w) + 'px; height: '
+             + ((datetable == undefined ? 6 : datetable.length)*datebox_h)
+             + 'px;">Laen kalendrit...</th></tr></tbody>';
+
+        build_calendar(month, year);
+    } else {year=cal_year; month=cal_month;}
+
+    // Kalendri tabel
+    for (let y=0; y<datetable.length; y+=1) {
+
+        tablestr += '<tr>';
+
+        for (let x=0; x<7; x+=1) {
+
+            let astroevents = datetable[y][x]['astroevents'],
+                t0 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(0,0,0,0) ),
+                t1 = new Date( new Date( datetable[y][x]['date'].getTime() ).setHours(24,0,0,0) ),
+                datekey = datestring(t0);
+
+            // Kuupäeva lahtri kujundus
+            tablestr += '<td id = "' + datekey + '" class="hoverblock" style="'
+                + (datetable[y][x]['thismonth'] ? 'background-color: ' + (datetable[y][x]['today'] ? ' #ffff0044' : (datetable[y][x]['weekend'] ? ' #66666622' : 'transparent')) + '; border: 1px solid var(--bgcolor);' : '')
+                + (datetable[y][x]['today'] ? ' font-weight: bold;' : '')
+                + '" onclick="dayclick(this.id);"><div style="width: ' + (datebox_w-2) + 'px; height: ' + (datebox_h-2*eventrow_h-1) + 'px; display: flex; align-items: center; justify-content: space-between;">';
+            
+            // Kuu faaside kujutised
+            if ( datebox_w > 39 && astroevents.some(event => event.type == 'moonquarter') ) {
+                event = astroevents.find((event) => event.type == 'moonquarter');
+
+                let m_r = Math.min(datebox_w < 50 ? (datebox_w-30)/4 : (datebox_h-2*eventrow_h)/4, 10),
+                    m_c = m_r + 2;
+
+                tablestr += '<svg width="' + (2*m_c).toFixed(2) + '" height="' + (2*m_c).toFixed(2) + '" style="margin-left: ' + m_r.toFixed(2) + '"><circle cx="'
+                    + m_c.toFixed(2) + '" cy="' + m_c.toFixed(2) + '" r="' + m_r.toFixed(2);
+
+                if (event.kind == 0) {          // Kuuloomine
+                    tablestr += '" stroke="#666" fill="#000" stroke-width="1"></circle><title>Kuuloomine kell ';
+                } else if (event.kind == 1) {   // Esimene veerand
+                    tablestr += '" fill="#000"></circle><path d="M' + m_c.toFixed(2) + ',' + (m_c-m_r).toFixed(2)
+                        + ' A' + m_r.toFixed(2) + ',' + m_r.toFixed(2) + ',0,0,1,' + m_c.toFixed(2) + ',' + (m_c+m_r).toFixed(2)
+                        + ' Z" fill="#fff"></path><circle cx="' + m_c.toFixed(2) + '" cy="' + m_c.toFixed(2) + '" r="' + m_r.toFixed(2)
+                        + '" stroke="#666" fill="none" stroke-width="1"></circle><title>Esimene veerand kell ';
+                } else if (event.kind == 2) {   // Täiskuu
+                    tablestr += '" stroke="#666" fill="#fff" stroke-width="1"></circle><title>Täiskuu kell ';
+                } else if (event.kind == 3) {   // Viimane veerand
+                    tablestr += '" fill="#000"></circle><path d="M' + m_c.toFixed(2) + ',' + (m_c-m_r).toFixed(2)
+                        + ' A' + m_r.toFixed(2) + ',' + m_r.toFixed(2) + ',0,0,0,' + m_c.toFixed(2) + ',' + (m_c+m_r).toFixed(2)
+                        + ' Z" fill="#fff"></path><circle cx="' + m_c.toFixed(2) + '" cy="' + m_c.toFixed(2) + '" r="' + m_r.toFixed(2)
+                        + '" stroke="#666" fill="none" stroke-width="1"></circle><title>Viimane veerand kell ';
+                }
+
+                tablestr += timeformat(event.time, false, false, 'num', false, 'long', true, false) + '</title></svg>';
+
+            } else {
+                tablestr += '<div style="width: 1px; height: 1px"></div>'
+            }
+            
+            // Kuupäeva kujundus
+            tablestr += '<div style="margin-right: ' + (datebox_w/10).toFixed(2) + 'px;'
+                + (datetable[y][x]['holiday'] && datetable[y][x]['thismonth'] ? ' color: #f00;' : '') + '">' + datetable[y][x]['label'] + '</div></div>';
+            
+            // Astronoomiasündmuste markerid
+            let astrosvg = '<svg width="' + datebox_w.toFixed(2) + '" height="' + eventrow_h.toFixed(2) + '" style="display: block; margin-left: -1px; margin-right: -1px;">',
+                astro_counter = 0,
+                event_counter = 0;
+            
+            for (event of astroevents) {
+                if (event.type != 'moonquarter' || datebox_w < 40) {
+
+                    if (Object.keys(event).includes('start') && Object.keys(event).includes('end')) {
+
+                        let rectstart, rectend;
+
+                        if (datestring(event.start) == datekey) {
+                            astrosvg += '<circle cx="' + clamp((event.start-t0)/(t1-t0)*datebox_w, marker_r, datebox_w-marker_r).toFixed(2)
+                                + '" cy="' + (eventrow_h/2).toFixed(2) + '" r="' + marker_r.toFixed(2) + '" fill="#080"></circle>';
+
+                            rectstart = clamp((event.start-t0)/(t1-t0)*datebox_w, marker_r, datebox_w-marker_r);
+                        } else {
+                            rectstart = 0;
+                        }
+
+                        if (datestring(event.end) == datekey) {
+                            astrosvg += '<circle cx="' + clamp((event.end-t0)/(t1-t0)*datebox_w, marker_r, datebox_w-marker_r).toFixed(2)
+                                + '" cy="' + (eventrow_h/2).toFixed(2) + '" r="' + marker_r.toFixed(2) + '" fill="#080"></circle>';
+
+                            rectend = clamp((event.end-t0)/(t1-t0)*datebox_w, marker_r, datebox_w-marker_r);
+                        } else {
+                            rectend = datebox_w;
+                        }
+                        
+                        astrosvg += '<rect x="' + rectstart.toFixed(2) + '" width="' + (rectend - rectstart).toFixed(2)
+                            + '" y="' + (0.3*eventrow_h).toFixed(2) + '" height="' + (0.4*eventrow_h).toFixed(2)
+                            + '" fill="#080"></rect>';
+
+                    } else if (Object.keys(event).includes('time')) {
+                        astrosvg += '<circle cx="' + clamp((event.time-t0)/(t1-t0)*datebox_w, marker_r, datebox_w-marker_r).toFixed(2)
+                            + '" cy="' + (eventrow_h/2).toFixed(2) + '" r="' + marker_r.toFixed(2) + '" fill="#080"></circle>';
+                    }
+
+                    astro_counter += 1;
+                }
+            }
+
+            if (astro_counter == 0) {
+                tablestr += '<div style="width=100%; height: ' + eventrow_h.toFixed(2) + 'px;"></div>';
+            } else {
+                tablestr += (astrosvg + '</svg>');
+            }
+
+            // TODO üritused
+            tablestr += '<div style="width=100%; height: ' + (eventrow_h-1).toFixed(2) + 'px;"></div>';
+        }
+
+        tablestr += '</tr>';
+    }
+
+    tablestr += '</tbody>';
+
+    document.getElementById("cal-days").innerHTML = tablestr;
+
+
+    // Valitud päev
+    if (Object.keys(datekeys).includes(selected)) {dayclick(selected, false)};
+
+    // Hoiatused
+    if (year < 1900) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.<br><b>NB:</b> enne 1900. aastat võib arvutustes esineda vigu.'
+        document.getElementById('cal-warning').style.display = '';
+    } else if (year < 1918 || (year == 1918 && month < 2)) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> ajaarvamine on Gregoriuse kalendri järgi. Eestis võeti Gregoriuse kalender kasutusele 14. veebruaril 1918.'
+        document.getElementById('cal-warning').style.display = '';
+    } else if (year > 2099) {
+        document.getElementById('cal-warning').innerHTML = '<b>NB:</b> pärast 2100. aastat võib arvutustes esineda vigu.'
+        document.getElementById('cal-warning').style.display = '';
+    } else {
+        document.getElementById('cal-warning').innerHTML = ''
+        document.getElementById('cal-warning').style.display = 'none';
+    }
+    
+    // Infokasti mõõtmed
+    document.getElementById('day-events').style.height = document.getElementById('cal-settings').style.height = (total_h-document.getElementById('cal-main').offsetHeight - document.getElementById('cal-warning').offsetHeight).toFixed(2) + 'px'
+    document.getElementById('day-events').style.width = document.getElementById('cal-settings').style.width = document.getElementById('cal-settings-toggle').style.width = document.getElementById('cal-warning').style.width = (7*datebox_w) + 'px'
+
 }
 
 </script>
