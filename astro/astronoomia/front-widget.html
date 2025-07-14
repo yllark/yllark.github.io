@@ -13,29 +13,12 @@
         --linecolor: #888;
         --hovercolor: #00ccff88;
         --bgcolor: #00ccff22;
-        --linemargin: 5px;
     }
 
     * {
-        box-sizing: border-box;
         font-family: 'Roboto', sans-serif;
         color: var(--textcolor);
-    }
-
-    /* Vertikaalne kriipsjoon */
-    .vline {
-        margin: 0 var(--linemargin);
-        width: 2px;
-        height: 100%;
-        background: repeating-linear-gradient(to bottom, var(--linecolor) 0 5px,#0000 0 7px)
-    }
-
-    /* Horisontaalne kriipsjoon */
-    .hline {
-        margin: var(--linemargin) 0;
-        height: 2px;
-        width: 100%;
-        background: repeating-linear-gradient(to right, var(--linecolor) 0 5px,#0000 0 7px)
+        box-sizing: border-box;
     }
 
     /* Kursorile reageerivad elemendid */
@@ -61,562 +44,1053 @@
         filter: brightness(200%);
     }
 
-    select {
+    select, input {
         background-color: transparent;
         border: none;
-        font-size: medium;
+        vertical-align: middle;
+        margin: 1px 1px 2px 2px;
+        padding: 0px;
     }
 
-    select:hover {
+    select:hover, input:hover {
         background-color: var(--hovercolor);
         text-decoration: underline;
         cursor: pointer;
     }
 
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+
     /* Pildid ja graafika */
     svg, canvas {
         display: block;
+        margin: auto;
     }
 
-    /* Vaikimisi paigutus */
-    div, td {
-        vertical-align: middle;
-        text-align: center;
+    .graph_grid line {
+        stroke: #666;
+        stroke-opacity: 0.1;
+        shape-rendering: crispEdges;
     }
 
 </style>
 
 </head>
 
-<body style="background-color: transparent; margin: 0px; height: 500px; width: 300px;">
-
+<body id="fwbody" style="background-color: transparent; margin: 0px;" onresize="fw_update(calc=false, draw=false);">
 <h1 style="display: none;">Vigur avalehele:</h1>
-<div id="front-widget" style="width: 300px; height: 500px;">
 
-    <!-- Vaatleja asukoht -->
-    <div style="width: 100%; height: 40px; border-radius: 20px; margin-bottom: 4px; background-color: var(--bgcolor); line-height: 40px;">
-        Asukoht:
-        <select style="font-weight: bold;" onchange="obs_pos = new Astronomy.Observer(cities[this.value].lat, cities[this.value].lon, cities[this.value].elev); fw_update();">
+<!-- Kuupäeva valik -->
+<div
+    style="
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    ">
+
+    <!-- Eelmine päev -->
+    <div
+        class="hoverblock"
+        style="
+            display: flex;
+            flex-grow: 1;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border-top-left-radius: 20px;
+        "
+        onclick="
+            document.getElementById('fw-date').value = new Date(t_base.getFullYear(), t_base.getMonth(), t_base.getDate()-1).toLocaleDateString('sv');
+            fw_update(calc=true, draw=true);
+        "
+    >
+        <svg width="10" height="16">
+            <polygon points="10,0 10,15 0,8" style="fill:var(--linecolor)" />
+        </svg>
+    </div>
+
+    <!-- Kuupäeva silt ja kalender -->
+    <div style="padding: 10px; background-color: var(--bgcolor);">
+
+        <!-- Silt -->
+        Päike ja Kuu<span id="fw-daylabel"> täna,</span>
+        <!-- Kuupäeva valik -->
+        <input type="date" id="fw-date" style="font-size: medium; margin: 0px; vertical-align: baseline;" onchange="fw_update(calc=true, draw=true);">
+
+    </div>
+
+    <!-- Järgmine päev -->
+    <div
+        class="hoverblock"
+        style="
+            display: flex;
+            flex-grow: 1;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            border-top-right-radius: 20px;
+        "
+        onclick="
+            document.getElementById('fw-date').value = new Date(t_base.getFullYear(), t_base.getMonth(), t_base.getDate()+1).toLocaleDateString('sv');
+            fw_update(calc=true, draw=true);
+        "
+    >
+        <svg width="10" height="16">
+            <polygon points="0,0 0,15 10,8" style="fill:var(--linecolor)" />
+        </svg>
+    </div>
+
+</div>
+
+<!-- Vaatleja asukoht -->
+<div
+    style="
+        width: 100%;
+        background-color: var(--bgcolor);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        padding: 10px;
+    ">
+
+    <!-- Asukoha valik -->
+    <div>
+        Vaatleja asukoht:
+        <select
+            id="fw-city"
+            style="
+                font-weight: bold;
+                font-size: medium;
+                margin: 0px;
+                vertical-align: baseline;
+            "
+            onchange="fw_update(calc=true, draw=false);"
+        >
             <option value="estcen">Eesti keskpunkt</option>
-            <optgroup label="Valik Eesti linnu:">
+            <option value="coords">kasutaja koordinaadid</option>
+            <optgroup label="Valik Eesti asulaid:">
                 <option value="Haapsalu">Haapsalu</option>
+                <option value="Jõgeva">Jõgeva</option>
+                <option value="Jõhvi">Jõhvi</option>
                 <option value="Kuressaare">Kuressaare</option>
                 <option value="Kärdla">Kärdla</option>
                 <option value="Mustvee">Mustvee</option>
                 <option value="Narva">Narva</option>
                 <option value="Paide">Paide</option>
                 <option value="Petseri">Petseri</option>
+                <option value="Põlva">Põlva</option>
                 <option value="Pärnu">Pärnu</option>
                 <option value="Rakvere">Rakvere</option>
                 <option value="Rapla">Rapla</option>
                 <option value="Tallinn">Tallinn</option>
                 <option value="Tartu">Tartu</option>
+                <option value="Tõrva">Tõrva</option>
                 <option value="Valga">Valga</option>
+                <option value="Võru">Võru</option>
                 <option value="Viljandi">Viljandi</option>
             </optgroup>
         </select>
     </div>
 
-    <!-- Päikese andmed -->
-    <div style="height: 200px; margin-bottom: 1px;">
-
-        <!-- Eelmine päev -->
-        <div
-            class="hoverblock"
-            title="Eelmine päev"
-            style="
-                float: left;
-                width: 50px;
-                height: 100%;
-                border-top-left-radius: 20px;
-                border-bottom-left-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            "
-            onclick="t_suninfo = sundata(new Date(t_suninfo.getTime() - 86400000));"
-        >
-            <svg width="20" height="30">
-                <polygon points="20,0 20,30 0,15" style="fill:var(--linecolor)" />
-            </svg>
-        </div>
-
-        <!-- Andmete tabel -->
-        <table style="float: left; width:200px; height: 100%; border-collapse: collapse; background-color: var(--bgcolor);"><tbody>
-
-            <!-- Kuupäev ja kaugus -->
-            <tr style="height: 60px; vertical-align: bottom;">
-                <td colspan="3">
-                    <span id="fw-sun-date">Päike ––.––.––</span><br>
-                    <span id="fw-sun-dist" title="Päikese keskpunkti kaugus Maa keskpunktist astronoomilisel keskpäeval" style="font-size: 10px;">Kaugus: ––– ––– ––– km (–,––– aü)</span>
-                </td>
-            </tr>
-
-            <!-- Pilt ja kulminatsioonikõrgus -->
-            <tr style="height: 40px;">
-                <td style="width: 35%;"></td>
-                <td id="fw-sun-img" title="Päikese nurkläbimõõt: 30'" style="width: 30%;"><canvas id="sun_img"></td>
-                <td style="width: 35%;">
-                    <div class="hline" style="float: left; width: 20px; --linemargin: 18px;"></div>
-                    <div id="fw-sun-alt" title="Kulminatsioonikõrgus – kõrgus horisondist astronoomilisel keskpäeval" style="float: left; line-height: 38px;">&nbsp;––,–°</div>
-                </td>
-            </tr>
-
-            <!-- Tõusu- ja loojangunooled ja meridiaanijoon -->
-            <tr style="height: 40px;">
-                <td style="text-align: right; font-size: 36px; line-height: 38px; color: var(--linecolor);">↗</td>
-                <td><div class="vline" style="--linemargin: 28px; height: 90%;"></div></td>
-                <td style="text-align: left; font-size: 36px; line-height: 38px; color: var(--linecolor);">↘</td>
-            </tr>
-
-            <!-- Kellaajad ja asimuudid -->
-            <tr style="height: 60px; vertical-align: top;">
-                <td title="Tõusu kellaaeg ja suund">
-                    <span id="fw-sun-risetime">––:––</span><br>
-                    <span id="fw-sun-riseazm" style="font-size: 10px;">–––,–° (––)</span>
-                </td>
-                <td id="fw-sun-meridiantime" title="Kulminatsiooni kellaaeg – astronoomiline keskpäev">
-                    ––:––<br>
-                    <span style="font-size: 10px;">&nbsp;</span></td>
-                <td title="Loojangu kellaaeg ja suund">
-                    <span id="fw-sun-settime">––:––</span><br>
-                    <span id="fw-sun-setazm" style="font-size: 10px;">–––,–° (––)</span>
-                </td>
-            </tr>
-
-        </tbody></table>
-
-        <!-- Järgmine päev -->
-        <div
-            class="hoverblock"
-            title="Järgmine päev"
-            style="
-                float: left;
-                width: 50px;
-                height: 100%;
-                border-top-right-radius: 20px;
-                border-bottom-right-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            "
-            onclick="t_suninfo = sundata(new Date(t_suninfo.getTime() + 86400000));"
-        >
-            <svg width="20" height="30">
-                <polygon points="0,0 0,30 20,15" style="fill:var(--linecolor)" />
-            </svg>
-        </div>
-
-    </div>
-
-    <!-- Kuu andmed -->
-    <div style="height: 210px; margin-top: 1px;">
-
-        <!-- Eelmine kuukäik -->
-        <div
-            class="hoverblock"
-            title="Eelmine kuukäik"
-            style="
-                float: left;
-                width: 50px;
-                height: 100%;
-                border-top-left-radius: 20px;
-                border-bottom-left-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-        "
-            onclick="t_mooninfo = moondata(new Date(t_mooninfo.getTime() - 89400000));"
-        >
-            <svg width="20" height="30">
-                <polygon points="20,0 20,30 0,15" style="fill:var(--linecolor)" />
-            </svg>
-        </div>
-
-        <!-- Andmete tabel -->
-        <table style="float: left; width:200px; height: 100%; border-collapse: collapse; background-color: var(--bgcolor);"><tbody>
-
-            <!-- Faas ja kaugus -->
-            <tr style="height: 60px; vertical-align: bottom;">
-                <td colspan="3">
-                    <span id="fw-moon-phase" title="Faas ja valgustatud pinna osa kulminatsiooni hetkel">Kuu (––%)</span><br>
-                    <span id="fw-moon-dist" title="Kuu keskpunkti kaugus Maa keskpunktist kulminatsiooni hetkel" style="font-size: 10px;">Kaugus: ––– ––– km</span>
-                </td>
-            </tr>
-
-            <!-- Pilt ja kulminatsioonikõrgus -->
-            <tr style="height: 40px;">
-                <td style="width: 35%;"></td>
-                <td id="fw-moon-img" title="Kuu nurkläbimõõt: 30'" style="width: 30%;"><canvas id="moon_img"></canvas></td>
-                <td style="width: 35%;">
-                    <div class="hline" style="float: left; width: 20px; --linemargin: 18px;"></div>
-                    <div id="fw-moon-alt" title="Kulminatsioonikõrgus – kõrgus horisondist lõunasuunal" style="float: left; width: 40px; line-height: 38px;">&nbsp;––,–°</div>
-                </td>
-            </tr>
-
-            <!-- Tõusu- ja loojangunooled ja meridiaanijoon -->
-            <tr style="height: 40px;">
-                <td style="text-align: right; font-size: 36px; line-height: 38px; color: var(--linecolor);">↗</td>
-                <td><div class="vline" style="--linemargin: 28px; height: 90%;"></div></td>
-                <td style="text-align: left; font-size: 36px; line-height: 38px; color: var(--linecolor);">↘</td>
-            </tr>
-
-            <!-- Ajad ja asimuudid -->
-            <tr style="height: 60px; vertical-align: top;">
-                <td title="Tõusu aeg ja suund">
-                    <span id="fw-moon-risetime"><span style="font-size: 11px;">––––</span><br>––:––</span><br>
-                    <span id="fw-moon-riseazm" style="font-size: 10px;">–––° (––)</span>
-                </td>
-                <td id="fw-moon-meridiantime" title="Kulminatsiooni aeg – Kuu lõunakaares">
-                    <span style="font-size: 11px;">––––</span><br>––:––<br>
-                    <span style="font-size: 10px;">&nbsp;</span>
-                </td>
-                <td title="Loojangu aeg ja suund">
-                    <span id="fw-moon-settime"><span style="font-size: 11px;">––––</span><br>––:––</span><br>
-                    <span id="fw-moon-setazm" style="font-size: 10px;">–––° (––)</span>
-                </td>
-            </tr>
-
-            <!-- Lisaruum -->
-            <tr style="height: 10px;"></tr>
-
-        </tbody></table>
-
-        <!-- Järgmine kuukäik -->
-        <div
-            class="hoverblock"
-            title="Järgmine kuukäik"
-            style="
-                float: left;
-                width: 50px;
-                height: 100%;
-                border-top-right-radius: 20px;
-                border-bottom-right-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            "
-            onclick="t_mooninfo = moondata(new Date(t_mooninfo.getTime() + 89400000));"
-        >
-            <svg width="20" height="30">
-                <polygon points="0,0 0,30 20,15" style="fill:var(--linecolor)" />
-            </svg>
-        </div>
+    <!-- Asukoha koordinaadid -->
+    <div style="font-size: smaller;">
         
-    </div>
+        <!-- Pikkuskraad -->
+        <nobr>
+            λ = 
+            <input
+                type="number"
+                id="fw-lon"
+                min="21"
+                max="29"
+                step="0.0001"
+                style="
+                    width: 50px;
+                    margin: 0px;
+                    vertical-align: baseline;
+                    text-align: right;
+                "
+                onchange="
+                    document.getElementById('fw-city').value='coords';
+                    fw_update(calc=true, draw=false);
+                "
+            >°E;
+        </nobr>&emsp;
 
-    <!-- Efemeriidide link -->
-    <a href="https://uus.astronoomia.ee/efemeriidid" target="_parent">
-        <div class="hoverblock-text" style="width: 100%; height: 40px; border-radius: 20px; margin-top: 4px; line-height: 40px;">Rohkem efemeriide</div>
-    </a>
+        <!-- Laiuskraad -->
+        <nobr>
+            φ =
+            <input
+                type="number"
+                id="fw-lat"
+                min="57"
+                max="60"
+                step="0.0001"
+                style="
+                    width: 50px;
+                    margin: 0px;
+                    vertical-align: baseline;
+                    text-align: right;
+                "
+                onchange="
+                    document.getElementById('fw-city').value='coords';
+                    fw_update(calc=true, draw=false);
+                "
+            >°N;
+        </nobr>&emsp;
+
+        <!-- Kõrgus -->
+        <nobr>
+            h =
+            <input
+                type="number"
+                id="fw-elev"
+                min="0"
+                max="1000"
+                style="
+                    width: 25px;
+                    margin: 0px;
+                    vertical-align: baseline;
+                    text-align: right;
+                "
+                onchange="
+                    document.getElementById('fw-city').value='coords';
+                    fw_update(calc=true, draw=false);
+                "
+            > m
+        </nobr>
+
+    </div>
 
 </div>
 
-<!-- Debug info -->
-<div style="display: none;">
-    Praegune aeg: <span id="time-now"></span><br>
-    Vaatleja asukoht: <span id="observer-location"></span>
+<!-- Sisu -->
+<div
+    style="
+        border: 20px solid var(--bgcolor);
+        border-top: 10px solid var(--bgcolor);
+        border-bottom-left-radius: 20px;
+        border-bottom-right-radius: 20px;
+    "
+    >
+    <table style="width: 100%;"><tbody>
+        <tr>
+            <td style="font-size: 10px;">
+                <canvas id="sun_img"></canvas>
+                <div id="sun_dist"><b>Kaugus</b>: –––,–––&nbsp;mln&nbsp;km (–,–––&nbsp;aü)</div>
+                <div id="sun_size"><b>Nurksuurus</b>: ––,––'</div>
+            </td>
+            <td id="fw-suninfo" style="width: 99%; position: relative;">
+                <div
+                    id="fw-graph"
+                    onmousemove="graph_interactive(event)"
+                >Graafik
+                </div>
+                <div
+                    id="fw-graph-sundata"
+                    style="
+                        position: absolute;
+                        top: 14px; left: 30px;
+                        font-size: 10px;
+                        background-color: rgba(255, 255, 100, 0.25);
+                        padding: 5px;
+                        border-right: 1px solid rgb(127,127,50);
+                        border-bottom: 1px solid rgb(127,127,50);
+                        border-bottom-right-radius: 10px;
+                    "
+                    title="Märgid: ↗ tõus, | kulminatsioon, ↘ loojang"
+                    onmousemove="graph_interactive(event)"
+                >
+                </div>
+                <div
+                    id="fw-graph-moondata"
+                    style="
+                        position: absolute;
+                        top: 14px; right: 29px;
+                        font-size: 10px;
+                        background-color: rgba(102, 102, 102, 0.25);
+                        padding: 5px;
+                        border-left: 1px solid var(--textcolor);
+                        border-bottom: 1px solid var(--textcolor);
+                        border-bottom-left-radius: 10px;
+                    "
+                    title="Märgid: ↗ tõus, | kulminatsioon, ↘ loojang"
+                    onmousemove="graph_interactive(event)"
+                >
+                </div>
+                <div
+                    id="fw-graph-sun-active"
+                    style="
+                        display: none;
+                        position: absolute;
+                        bottom: 22px; left: 29px;
+                        font-size: 10px;
+                        background-color: rgba(255, 255, 100, 0.25);
+                        padding: 5px;
+                        border: 1px solid rgb(127,127,50);
+                        border-radius: 10px;
+                    "
+                    onmousemove="graph_interactive(event)"
+                >
+                </div>
+                <div
+                    id="fw-graph-moon-active"
+                    style="
+                        display: none;
+                        position: absolute;
+                        bottom: 22px; right: 28px;
+                        font-size: 10px;
+                        background-color: rgba(102, 102, 102, 0.25);
+                        padding: 5px;
+                        border: 1px solid var(--textcolor);
+                        border-radius: 10px;
+                    "
+                    onmousemove="graph_interactive(event)"
+                >
+                </div>
+                <div
+                    id="fw-graph-time-active"
+                    style="
+                        display: none;
+                        position: absolute;
+                        bottom: 22px; left: 29px;
+                        font-size: 10px;
+                        font-weight: bold;
+                        color: rgba(100,100,255);
+                        background-color: rgba(100, 100, 255, 0.25);
+                        padding: 2px;
+                        border: 1px solid rgba(100,100,255);
+                        border-top-left-radius: 5px;
+                        border-top-right-radius: 5px;
+                    "
+                    onmousemove="graph_interactive(event)"
+                >
+                </div>
+                <div id="fw-sundata" title="Märgid: ↗ tõus, | kulminatsioon, ↘ loojang" style="font-size: smaller;">Päikese andmed</div>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-size: 10px;">
+                <canvas id="moon_img"></canvas>
+                <div id="moon_phase" style="font-size: larger; text-align: center;"><b>Kuu</b> (––%)</div>
+                <div id="moon_dist"><b>Kaugus</b>: –––&nbsp;–––&nbsp;km</div>
+                <div id="moon_size"><b>Nurksuurus</b>: ––,––'</div>
+            </td>
+            <td>
+                <div id="fw-moondata" title="Märgid: ↗ tõus, | kulminatsioon, ↘ loojang" style="font-size: smaller;">Kuu andmed</div>
+            </td>
+        </tr>
+    </tbody></table>
 </div>
 
 <br>
 <canvas id="moon_map" style="display: none;"></canvas>
+<canvas id="sun_sdo" style="display: none;"></canvas>
 
 </body>
 
 <!--Skriptid-->
-<!-- Veebis -->
-    <script src="../external-scripts/astronomy.browser.min.js"></script>
-    <script src="../external-scripts/d3.v7.min.js"></script>
-    <script src="../external-scripts/d3-geo-projection.min.js"></script>
-    <script src="../external-scripts/common.js"></script>
-
-
-<!-- Lokaal
-<script src="astronomy.browser.min.js"></script>
-<script src="d3.v7.min.js"></script>
-<script src="d3-geo-projection.min.js"></script>
-<script src="common.js"></script>
- -->
+<script src="../external-scripts/astronomy.browser.min.js"></script>
+<script src="../external-scripts/d3.v7.min.js"></script>
+<script src="../external-scripts/d3-geo-projection.min.js"></script>
+<script src="../external-scripts/common.js"></script>
 
 <!--Veebilehe skript-->
 <script>
 
-let t_current,
-    t_suninfo,
-    t_mooninfo,
+const   img_hfov = 40,  // arcmin
+        graph_intv = 1; // min
 
-    obs_pos = new Astronomy.Observer(cities['estcen'].lat, cities['estcen'].lon, cities['estcen'].elev);
+let obs_pos,
+    t_base,
+    t0,
+    t1,
 
-// Kuu ja Päikese piltide seaded
-const   moon_img_width = 58,  // pix
-        moon_img_height = 38, // pix
-        moon_radius = 1737.4, // km
-        moon_img_hfov = 40;   // arcmin
+    // Graafiku andmed
+    sun_data = {},
+    moon_data = {},
+    graph_scale_x,
+    graph_scale_y,
 
-document.getElementById('moon_img').width=moon_img_width;
-document.getElementById('moon_img').height=moon_img_height;
-document.getElementById('sun_img').width=moon_img_width;
-document.getElementById('sun_img').height=moon_img_height;
-
-
-// Kuu pinnakaart
-let moon_map_width,
+    // Kuu pinnakaart
+    moon_map_width,
     moon_map_height,
-    moon_map = new Image;
+    moon_map = new Image,
+
+    // Päikese pilt SDO-lt
+    sun_sdo_width,
+    sun_sdo_height,
+    sun_sdo = new Image,
+
+    // Mõõtmed
+    dims = {
+        'img' : 160,
+        'graph_margin' : {
+            'left'  : 25,
+            'right' : 25,
+            'top'   : 10,
+            'bottom': 20
+        }
+    }
+
+// Hackish way to get local date in ISO format
+document.getElementById('fw-date').value = new Date().toLocaleDateString('sv');
+
 
 //moon_map.src = "../textures/lroc_color_poles_1k.jpg"; // WEB
 moon_map.src = "https://raw.githubusercontent.com/yllark/yllark.github.io/refs/heads/main/astro/textures/lroc_color_poles_1k.jpg"; // LOCAL
-
 moon_map.crossOrigin = "Anonymous";
-moon_map.onload = fw_init;
+sun_sdo.src = "https://raw.githubusercontent.com/yllark/yllark.github.io/refs/heads/main/astro/textures/sun_test.jpg";
+sun_sdo.crossOrigin = "Anonymous";
 
+window.onload = fw_init;
+
+function graph_interactive(event) {
+    let rect = document.getElementById('fw-graph').getBoundingClientRect(),
+        xval = event.clientX-rect.x-3,
+        yval = event.clientY-rect.y;
+
+    if (
+        xval >= dims.graph_margin.left &&
+        yval >= dims.graph_margin.top &&
+        xval <= dims.graph_w-dims.graph_margin.right &&
+        yval <= dims.graph_h-dims.graph_margin.bottom
+    ) {
+        let index = Math.round(interpolate(graph_scale_x.invert(xval).getTime(), t0.date.getTime(), t1.date.getTime(), 0, sun_data.length-1));
+        document.getElementById('fw-graph-sun-active').innerHTML =
+            '<b>Päike</b>:<br>Asimuut: ' + cardinal(sun_data[index].a)
+            + '<br>Kõrgus: ' + numberformat(sun_data[index].h, 'abs', 1)
+            + '°<br>Kaugus: ' + numberformat(sun_data[index].d/1e6, 'abs', 3) + ' mln km';
+        document.getElementById('fw-graph-moon-active').innerHTML =
+            '<b>Kuu</b>:<br>Asimuut: ' + cardinal(moon_data[index].a)
+            + '<br>Kõrgus: ' + numberformat(moon_data[index].h, 'abs', 1)
+            + '°<br>Kaugus: ' + moon_data[index].d.toLocaleString('et-ee',{'maximumFractionDigits':0})
+            + ' km<br>Faas: ' + numberformat(100*moon_data[index].p, 'abs', 1) + '%';
+        document.getElementById('fw-graph-time-active').innerHTML = timeformat(sun_data[index].t, false, false, 'num', false, 'num', true, false);
+
+        document.getElementById('fw-graph-sun-active').style.display = '';
+        document.getElementById('fw-graph-moon-active').style.display = '';
+        document.getElementById('fw-graph-time-active').style.display = '';
+        document.getElementById('graph_sundot').style.display = '';
+        document.getElementById('graph_moondot').style.display = '';
+        document.getElementById('graph_timeline').style.display = '';
+
+        document.getElementById('graph_sundot').setAttribute('cx', xval+1);
+        document.getElementById('graph_moondot').setAttribute('cx', xval+1);
+        document.getElementById('graph_sundot').setAttribute('cy', graph_scale_y(sun_data[index].h));
+        document.getElementById('graph_moondot').setAttribute('cy', graph_scale_y(moon_data[index].h));
+
+        document.getElementById('graph_timeline').setAttribute('x1', xval+1);
+        document.getElementById('graph_timeline').setAttribute('x2', xval+1);
+        document.getElementById('graph_timeline').setAttribute('y1', dims.graph_h-dims.graph_margin.bottom-document.getElementById('fw-graph-time-active').clientHeight);
+        document.getElementById('graph_timeline').setAttribute('y2', Math.min(graph_scale_y(sun_data[index].h), graph_scale_y(moon_data[index].h)));
+
+        document.getElementById('fw-graph-time-active').style.left = ( 29 + Math.round(interpolate(sun_data[index].t.getTime(), t0.date.getTime(), t1.date.getTime(), 0, graph_scale_x(t1.date)-graph_scale_x(t0.date)-document.getElementById('fw-graph-time-active').clientWidth-1, true)) )+'px';
+
+        let moon_active_h = 23 + Math.round(interpolate(moon_data[index].h, 0, 60, document.getElementById('fw-graph-time-active').clientHeight, graph_scale_y(0)-graph_scale_y(60)-document.getElementById('fw-graph-moon-active').clientHeight, true)),
+            sun_active_h = 23 + Math.round(interpolate(sun_data[index].h, 0, 60, document.getElementById('fw-graph-time-active').clientHeight, graph_scale_y(0)-graph_scale_y(60)-document.getElementById('fw-graph-sun-active').clientHeight, true));
+
+        if (document.getElementById('fw-graph-sun-active').clientWidth > xval-dims.graph_margin.left) {
+            if (sun_data[index].h >= moon_data[index].h && sun_active_h-moon_active_h < document.getElementById('fw-graph-moon-active').clientHeight) {
+                sun_active_h += document.getElementById('fw-graph-moon-active').clientHeight - sun_active_h + moon_active_h+1;
+            } else if (sun_data[index].h < moon_data[index].h && moon_active_h-sun_active_h < document.getElementById('fw-graph-sun-active').clientHeight) {
+                moon_active_h += document.getElementById('fw-graph-sun-active').clientHeight - moon_active_h + sun_active_h+1;
+            }
+            
+            document.getElementById('fw-graph-sun-active').style.bottom = sun_active_h+'px';
+            document.getElementById('fw-graph-moon-active').style.bottom = moon_active_h+'px';
+
+            document.getElementById('fw-graph-sun-active').style.right = '';
+            document.getElementById('fw-graph-sun-active').style.left = 29+(xval-dims.graph_margin.left)+'px';
+
+            document.getElementById('fw-graph-moon-active').style.right = '';
+            document.getElementById('fw-graph-moon-active').style.left = 29+(xval-dims.graph_margin.left)+'px';
+
+        } else if (document.getElementById('fw-graph-moon-active').clientWidth > dims.graph_w-dims.graph_margin.right-xval) {
+            if (sun_data[index].h >= moon_data[index].h && sun_active_h-moon_active_h < document.getElementById('fw-graph-moon-active').clientHeight) {
+                sun_active_h += document.getElementById('fw-graph-moon-active').clientHeight - sun_active_h + moon_active_h+1;
+            } else if (sun_data[index].h < moon_data[index].h && moon_active_h-sun_active_h < document.getElementById('fw-graph-sun-active').clientHeight) {
+                moon_active_h += document.getElementById('fw-graph-sun-active').clientHeight - moon_active_h + sun_active_h+1;
+            }
+            
+            document.getElementById('fw-graph-sun-active').style.bottom = sun_active_h+'px';
+            document.getElementById('fw-graph-moon-active').style.bottom = moon_active_h+'px';
+
+            document.getElementById('fw-graph-sun-active').style.left = '';
+            document.getElementById('fw-graph-sun-active').style.right = 28+(dims.graph_w-dims.graph_margin.right-xval)+'px';
+
+            document.getElementById('fw-graph-moon-active').style.left = '';
+            document.getElementById('fw-graph-moon-active').style.right = 28+(dims.graph_w-dims.graph_margin.right-xval)+'px';
+
+        } else {
+            document.getElementById('fw-graph-sun-active').style.bottom = sun_active_h+'px';
+            document.getElementById('fw-graph-moon-active').style.bottom = moon_active_h+'px';
+
+            document.getElementById('fw-graph-sun-active').style.left = '';
+            document.getElementById('fw-graph-sun-active').style.right = 28+(dims.graph_w-dims.graph_margin.right-xval)+'px';
+
+            document.getElementById('fw-graph-moon-active').style.right = '';
+            document.getElementById('fw-graph-moon-active').style.left = 29+(xval-dims.graph_margin.left)+'px';
+        }
+
+    } else {
+        document.getElementById('fw-graph-sun-active').style.display = 'none';
+        document.getElementById('fw-graph-moon-active').style.display = 'none';
+        document.getElementById('fw-graph-time-active').style.display = 'none';
+        document.getElementById('graph_sundot').style.display = 'none';
+        document.getElementById('graph_moondot').style.display = 'none';
+        document.getElementById('graph_timeline').style.display = 'none';
+    }
+}
 
 // Viguri käivitus
 function fw_init () {
     moon_map_width = moon_map.naturalWidth;
     moon_map_height = moon_map.naturalHeight;
-    document.getElementById("moon_map").width=moon_map_width;
-    document.getElementById("moon_map").height=moon_map_height;
+    document.getElementById("moon_map").width = moon_map_width;
+    document.getElementById("moon_map").height = moon_map_height;
     document.getElementById("moon_map").getContext("2d", { willReadFrequently: true }).drawImage(moon_map, 0, 0);
-    fw_update(reset=true);
+
+    sun_sdo_width = sun_sdo.naturalWidth;
+    sun_sdo_height = sun_sdo.naturalHeight;
+    document.getElementById("sun_sdo").width = sun_sdo_width;
+    document.getElementById("sun_sdo").height = sun_sdo_height;
+    document.getElementById("sun_sdo").getContext("2d", { willReadFrequently: true }).drawImage(sun_sdo, 0, 0);
+
+    fw_update(calc=true, draw=true);
 }
 
 
-/**
- * Funktsioon Päikese info uuendamiseks vastavalt etteantud ajale.
- * Päikese info määratakse t kuupäeva järgi
- * 
- * @arg {date object}       t
- * @returns {date object}   Päikese kulminatsiooniaeg kuupäeval t
- */
-function sundata (t) {
-    // Baaskuupäev
-    let t_last_midnight = Astronomy.MakeTime(new Date(new Date(t.getTime()).setHours(0,0,0,0)));
+// Päikese arvutamine
+function calc_sundata (draw=false) {
 
-    // Meridiaaniületus
-    let sunmeridian = Astronomy.SearchHourAngle('Sun', obs_pos, 0, t_last_midnight, 1);
-    // Ära muuda, kui sama aeg
-    if (timeformat(sunmeridian.time.date) == timeformat(t)) {return sunmeridian.time.date;}
-
-    // Tõus ja loojang
-    let t_sunrise = Astronomy.SearchRiseSet('Sun', obs_pos, 1, t_last_midnight, 1, 1.8);
-    let t_sunset = Astronomy.SearchRiseSet('Sun', obs_pos, -1, t_last_midnight, 1, 1.8);
-    let radec_sunrise = Astronomy.Equator('Sun', t_sunrise, obs_pos, true, true);
-    let radec_sunset = Astronomy.Equator('Sun', t_sunset, obs_pos, true, true);
-    let altaz_sunrise = Astronomy.Horizon(t_sunrise, obs_pos, radec_sunrise.ra, radec_sunrise.dec, 'normal');
-    let altaz_sunset = Astronomy.Horizon(t_sunset, obs_pos, radec_sunset.ra, radec_sunset.dec, 'normal');
-
-    // Kaugus
-    let d_sun = Astronomy.GeoVector('Sun', sunmeridian.time, false).Length();
-    // Nurksuurus
-    let a_sun = (10800/Math.PI)*Math.asin(695700/(d_sun*Astronomy.KM_PER_AU));
-    document.getElementById('fw-sun-img').title = 'Päikese nurkläbimõõt: ' + numberformat(2*a_sun,'abs',2) + "'";
-
-    // Infoväljad
-    document.getElementById('fw-sun-date').innerHTML = 'Päike ' + timeformat(t,true,true,'num',true,'long',false);
-    document.getElementById('fw-sun-dist').innerHTML = 'Kaugus: ' + (d_sun*Astronomy.KM_PER_AU).toLocaleString('et-ee',{'maximumFractionDigits':0}) + ' km (' + numberformat(d_sun,'abs',3) + ' aü)';
-    document.getElementById('fw-sun-alt').innerHTML = '&nbsp;' + numberformat(sunmeridian.hor.altitude,'abs',1) + '°';
-    document.getElementById('fw-sun-meridiantime').innerHTML = timeformat(sunmeridian.time.date,false,false,'long',false,'long',true,false) + '<br><span style="font-size: 10px;">&nbsp;</span>';
-    document.getElementById('fw-sun-risetime').innerHTML = timeformat(t_sunrise.date,false,false,'long',false,'long',true,false);
-    document.getElementById('fw-sun-settime').innerHTML = timeformat(t_sunset.date,false,false,'long',false,'long',true,false);
-    document.getElementById('fw-sun-riseazm').innerHTML = cardinal(altaz_sunrise.azimuth);
-    document.getElementById('fw-sun-setazm').innerHTML = cardinal(altaz_sunset.azimuth);
+    // Vaatleja asukohast sõltuv info
+    let t_rise = Astronomy.SearchRiseSet('Sun', obs_pos, 1, t0, 2, 1.8),
+        t_set = Astronomy.SearchRiseSet('Sun', obs_pos, -1, t0, 2, 1.8),
+        radec_rise = t_rise > t1 ? null : Astronomy.Equator('Sun', t_rise, obs_pos, true, true),
+        altaz_rise = t_rise > t1 ? null : Astronomy.Horizon(t_rise, obs_pos, radec_rise.ra, radec_rise.dec, 'normal'),
+        radec_set = t_set > t1 ? null : Astronomy.Equator('Sun', t_set, obs_pos, true, true),
+        altaz_set = t_set > t1 ? null : Astronomy.Horizon(t_set, obs_pos, radec_set.ra, radec_set.dec, 'normal'),
+        meridian = Astronomy.SearchHourAngle('Sun', obs_pos, 0, t0, 1),
+        datastr = '';
 
 
-    // Päikese pilt
-    let xc = moon_img_width/2,
-        yc = moon_img_height/2,
-        out = document.getElementById("sun_img").getContext("2d").createImageData(moon_img_width, moon_img_height);
+    // Andmed tekstina
+    datastr += '<b>↗</b> ' + timeformat(t_rise, false, false, 'num', false, 'num', true, false)
+        + ', suund: ' + cardinal(altaz_rise.azimuth)
+        + '<br><b>&nbsp;|&nbsp;</b> ' + timeformat(meridian.time, false, false, 'num', false, 'num', true, false)
+        + ', kõrgus: ' + numberformat(meridian.hor.altitude, 'abs', 1) + '°'
+        + '<br><b>↘</b> ' + timeformat(t_set, false, false, 'num', false, 'num', true, false)
+        + ', suund: ' + cardinal(altaz_set.azimuth);
 
-    for (let i=0; i<out.data.length; i += 4) {
-        let x = (i/4) % moon_img_width + 0.5;
-        let y = Math.floor(i/(4*moon_img_width)) + 0.5;
+    document.getElementById('fw-sundata').innerHTML = datastr;
+    document.getElementById('fw-graph-sundata').innerHTML = '<b>Päike</b>:<br>'+datastr;
 
-        let sun_ang_px = a_sun*moon_img_height/moon_img_hfov
-        let px_angdist = Math.sqrt((x-xc)**2 + (y-yc)**2);
-        let alpha = interpolate(px_angdist,sun_ang_px-0.5,sun_ang_px+0.5,1,0,clip=true);
+    // Andmed graafikule
+    sun_data = [];
 
-        if (alpha == 0) {
-            out.data[i] = 0;
-            out.data[i+1] = 0;
-            out.data[i+2] = 0;
-            out.data[i+3] = 0;
-        } else {
-            let x = 1-px_angdist/sun_ang_px;
-            let fac = (Math.sin(x*Math.PI/2))**(0.25) + 0.3*(1-x**0.1);
 
-            out.data[i] = 255 * fac;
-            out.data[i+1] = 255 * fac;
-            out.data[i+2] = 100 * fac;
-            out.data[i+3] = Math.round(alpha*255)
-        }
+    for (let t=t0.date.getTime(); t<=t1.date.getTime(); t+=graph_intv*60e3) {
+        let time = Astronomy.MakeTime(new Date(t)),
+            radec = Astronomy.Equator('Sun', time, obs_pos, true, true);
+            altaz = Astronomy.Horizon(time, obs_pos, radec.ra, radec.dec, 'normal')
+
+        sun_data.push({
+            't' : time.date,
+            'h' : altaz.altitude,
+            'a' : altaz.azimuth,
+            'd' : Astronomy.GeoVector('Sun', time, true).Length()*Astronomy.KM_PER_AU
+        });
     }
-    document.getElementById("sun_img").getContext("2d").putImageData(out, 0, 0);
 
-    return sunmeridian.time.date
+
+    // Pildi joonistamine
+    if (draw) {
+        let day_midpoint = Math.floor(sun_data.length/2)                        // index
+            dist = sun_data[day_midpoint].d,                                    // km
+            angradius = (10800/Math.PI)*Math.asin(bodies_params.Sun.r/dist);    // arcmin
+            infolabel = 'Väärtused päeva keskel (' + timeformat(sun_data[day_midpoint].t, false, false, 'num', false, 'num', true, false) + ')'
+        
+        
+        // Infoväljad
+        document.getElementById('sun_dist').innerHTML =
+            '<b>Kaugus</b>: ' + numberformat(dist/1e6,'abs',3)
+            + '&nbsp;mln&nbsp;km (' + numberformat(dist/Astronomy.KM_PER_AU,'abs',3) + '&nbsp;aü)';
+        document.getElementById('sun_size').innerHTML =
+            '<b>Nurksuurus</b>: ' + numberformat(2*angradius,'abs',2) + "'";
+        
+        document.getElementById('sun_dist').title = infolabel;
+        document.getElementById('sun_size').title = infolabel;
+        document.getElementById('sun_img').title = infolabel;
+        
+        
+        // Päikese pilt
+        let xc = dims.img/2,
+            yc = dims.img/2,
+            ang_px = angradius*dims.img/img_hfov,
+            source = document.getElementById("sun_sdo").getContext("2d").getImageData(0, 0, sun_sdo_width, sun_sdo_height).data,
+            out = document.getElementById("sun_img").getContext("2d").createImageData(dims.img, dims.img);
+        
+        for (let i=0; i<out.data.length; i += 4) {
+            let x = (i/4) % dims.img + 0.5,
+                y = Math.floor(i/(4*dims.img)) + 0.5,
+        
+                px_angdist = Math.sqrt((x-xc)**2 + (y-yc)**2),
+                alpha = interpolate(px_angdist,ang_px-0.5,ang_px+0.5,1,0,clip=true);
+        
+            if (alpha == 0) {
+                out.data[i] = 0;
+                out.data[i+1] = 0;
+                out.data[i+2] = 0;
+                out.data[i+3] = 0;
+            } else {
+                /*
+                let x = 1-px_angdist/ang_px,
+                    fac = (Math.sin(x*Math.PI/2))**(0.25) + 0.3*(1-x**0.1);
+            
+                out.data[i] = 255 * fac;
+                out.data[i+1] = 255 * fac;
+                out.data[i+2] = 100 * fac;
+                out.data[i+3] = Math.round(alpha*255)
+                */
+            
+                // SDO vaateväli 34' (pikslisuurus 0,504")
+                let edge = (img_hfov-34.4064)/(2*img_hfov)*dims.img,
+                    s_x = Math.round( interpolate(x, edge, dims.img-edge, 0, sun_sdo_width, true) ),
+                    s_y = Math.round( interpolate(y, edge, dims.img-edge, 0, sun_sdo_height, true) );
+            
+                // Kollane värv ja 2.2-gammaparandus
+                out.data[i] = 255*(source[4*(s_y*sun_sdo_width+s_x)]/255)**0.45;
+                out.data[i+1] = 255*(source[4*(s_y*sun_sdo_width+s_x)+1]/255)**0.45;
+                out.data[i+2] = 100*(source[4*(s_y*sun_sdo_width+s_x)+2]/255)**0.45;
+                out.data[i+3] = Math.round(alpha*255)
+            
+            }
+        }
+        document.getElementById("sun_img").width = dims.img;
+        document.getElementById("sun_img").height = dims.img;
+        document.getElementById("sun_img").getContext("2d").putImageData(out, 0, 0);
+    }
 }
 
 
-/**
- * Funktsioon Kuu info uuendamiseks vastavalt etteantud ajale.
- * Kuu info määratakse t-le lähima kulminatsiooni järgi
- * 
- * @arg {date object}       t
- * @returns {date object}   Ajale t lähim kulminatsiooniaeg
- */
-function moondata (t) {
-    // Lähim meridiaaniületus
-    let moonmeridian_future = Astronomy.SearchHourAngle('Moon', obs_pos, 0, t, 1);
-    let moonmeridian_past = Astronomy.SearchHourAngle('Moon', obs_pos, 0, t, -1);
-    let moonmeridian;
-    if (moonmeridian_future.time.date - t > t - moonmeridian_past.time.date) {moonmeridian = moonmeridian_past;}
-    else {moonmeridian = moonmeridian_future;}
-    // Ära muuda, kui sama aeg
-    if (timeformat(moonmeridian.time.date) == timeformat(t)) {return moonmeridian.time.date;}
+// Kuu arvutamine
+function calc_moondata (draw=false) {
 
-    // Tõus ja loojang
-    let t_moonrise = Astronomy.SearchRiseSet('Moon', obs_pos, 1, moonmeridian.time, -1, 1.8);
-    let t_moonset = Astronomy.SearchRiseSet('Moon', obs_pos, -1, moonmeridian.time, 1, 1.8);
-    let radec_moonrise = Astronomy.Equator('Moon', t_moonrise, obs_pos, true, true);
-    let radec_moonset = Astronomy.Equator('Moon', t_moonset, obs_pos, true, true);
-    let altaz_moonrise = Astronomy.Horizon(t_moonrise, obs_pos, radec_moonrise.ra, radec_moonrise.dec, 'normal');
-    let altaz_moonset = Astronomy.Horizon(t_moonset, obs_pos, radec_moonset.ra, radec_moonset.dec, 'normal');
+    // Vaatleja asukohast sõltuv info
+    let t_rise = Astronomy.SearchRiseSet('Moon', obs_pos, 1, t0, 2, 1.8),
+        t_set = Astronomy.SearchRiseSet('Moon', obs_pos, -1, t0, 2, 1.8),
+        radec_rise = t_rise > t1 ? null : Astronomy.Equator('Moon', t_rise, obs_pos, true, true),
+        altaz_rise = t_rise > t1 ? null : Astronomy.Horizon(t_rise, obs_pos, radec_rise.ra, radec_rise.dec, 'normal'),
+        radec_set = t_set > t1 ? null : Astronomy.Equator('Moon', t_set, obs_pos, true, true),
+        altaz_set = t_set > t1 ? null : Astronomy.Horizon(t_set, obs_pos, radec_set.ra, radec_set.dec, 'normal'),
+        meridian = Astronomy.SearchHourAngle('Moon', obs_pos, 0, t0, 1),
+        datastr = '';
 
-    // Kaugus, nurkläbimõõt ja libratsiooninurgad
-    let libration = Astronomy.Libration(moonmeridian.time);
+    if      (meridian.time > t1)    {meridian.time = null;}
+    else if (t_rise > t1)           {t_rise = null;}
+    else if (t_set > t1)            {t_set = null;}
 
 
-    // Infoväljad
-    // Kaugus, suurus ja faas
-    document.getElementById('fw-moon-phase').innerHTML = moonphase(moonmeridian.time) + ' (' + numberformat(100*Astronomy.Illumination('Moon', moonmeridian.time).phase_fraction,'abs',0) + '%)';
-    document.getElementById('fw-moon-dist').innerHTML = 'Kaugus: ' + (libration.dist_km).toLocaleString('et-ee',{'maximumFractionDigits':0}) + ' km';
-    document.getElementById('fw-moon-alt').innerHTML = '&nbsp;' + numberformat(moonmeridian.hor.altitude,'abs',1) + '°';
-    document.getElementById('fw-moon-img').title = 'Kuu nurkläbimõõt: ' + numberformat(60*libration.diam_deg,'abs',2) + "'";
+    // Andmed tekstina
+    if (t_rise < meridian.time && (t_set == null || t_set > meridian.time)) {
+        datastr += '<b>↗</b> ' + timeformat(t_rise, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_rise.azimuth)
+            + '<br><b>&nbsp;|&nbsp;</b> ' + timeformat(meridian.time, false, false, 'num', false, 'num', true, false)
+            + ', kõrgus: ' + numberformat(meridian.hor.altitude, 'abs', 1) + '°'
+            + (t_set == null ? '' : '<br><b>↘</b> ' + timeformat(t_set, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_set.azimuth));
+    } else if (t_set > meridian.time && (t_rise == null || t_rise > meridian.time)) {
+        datastr += '<b>&nbsp;|&nbsp;</b> ' + timeformat(meridian.time, false, false, 'num', false, 'num', true, false)
+            + ', kõrgus: ' + numberformat(meridian.hor.altitude, 'abs', 1) + '°'
+            + '<br><b>↘</b> ' + timeformat(t_set, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_set.azimuth)
+            + (t_rise == null ? '' : '<br><b>↗</b> ' + timeformat(t_rise, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_rise.azimuth));
+    } else if (t_rise > t_set && (meridian.time == null || t_set < meridian.time)) {
+        datastr += '<b>↘</b> ' + timeformat(t_set, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_set.azimuth)
+            + '<br><b>↗</b> ' + timeformat(t_rise, false, false, 'num', false, 'num', true, false)
+            + ', suund: ' + cardinal(altaz_rise.azimuth)
+            + (meridian.time == null ? '' : '<br><b>&nbsp;|&nbsp;</b> ' + timeformat(meridian.time, false, false, 'num', false, 'num', true, false)
+            + ', kõrgus: ' + numberformat(meridian.hor.altitude, 'abs', 1) + '°');
+    }
+
+    document.getElementById('fw-moondata').innerHTML = datastr;
+    document.getElementById('fw-graph-moondata').innerHTML = '<b>Kuu</b>:<br>'+datastr;
+
+
+    // Andmed graafikule
+    moon_data = []
     
-    // Tõusu, kulminatsiooni ja loojangu kuupäevad
-    let day_moonrise = timeformat(t_moonrise.date,false,true,'num',true,'short',false);
-    let day_moonset = timeformat(t_moonset.date,false,true,'num',true,'short',false);
-    let day_moonmeridian = timeformat(moonmeridian.time.date,false,true,'num',true,'short',false);
+    for (let t=t0.date.getTime(); t<=t1.date.getTime(); t+=graph_intv*60e3) {
+        let time = Astronomy.MakeTime(new Date(t)),
+            radec = Astronomy.Equator('Moon', time, obs_pos, true, true);
+            altaz = Astronomy.Horizon(time, obs_pos, radec.ra, radec.dec, 'normal')
 
-    document.getElementById('fw-moon-meridiantime').style.border = 'none';
-    // Kõik samal kuupäeval
-    if (day_moonrise == day_moonset) {
-        if (dayname(moonmeridian.time.date) == '')  {day_moonmeridian = timeformat(moonmeridian.time.date,false,true,'num',true,'short',false);}
-        else                                        {day_moonmeridian = dayname(moonmeridian.time.date);}
-        day_moonrise = day_moonset = '';
-    // Loojang järgmisel päeval
-    } else if (day_moonrise == day_moonmeridian) {
-        day_moonrise = '';
-        if (dayname(moonmeridian.time.date) == '')  {day_moonmeridian = timeformat(moonmeridian.time.date,false,true,'num',true,'short',false);}
-        else                                        {day_moonmeridian = dayname(moonmeridian.time.date);}
-        if (dayname(t_moonset.date) == '')  {day_moonset = timeformat(t_moonset.date,false,true,'num',true,'short',false);}
-        else                                {day_moonset = dayname(t_moonset.date);}
-        document.getElementById('fw-moon-meridiantime').style['border-right'] = '1px solid var(--linecolor)';
-    // Tõus eelmisel päeval 
-    } else if (day_moonset == day_moonmeridian) {
-        day_moonset = '';
-        if (dayname(moonmeridian.time.date) == '')  {day_moonmeridian = timeformat(moonmeridian.time.date,false,true,'num',true,'short',false);}
-        else                                        {day_moonmeridian = dayname(moonmeridian.time.date);}
-        if (dayname(t_moonrise.date) == '') {day_moonrise = timeformat(t_moonrise.date,false,true,'num',true,'short',false);}
-        else                                {day_moonrise = dayname(t_moonrise.date);}
-        document.getElementById('fw-moon-meridiantime').style['border-left'] = '1px solid var(--linecolor)';
-    // Kõik erinevatel päevadel (Eestis ei esine, polaaröö/päev)
-    } else {
-        if (dayname(moonmeridian.time.date) == '')  {day_moonmeridian = timeformat(moonmeridian.time.date,false,true,'num',true,'short',false);}
-        else                                        {day_moonmeridian = dayname(moonmeridian.time.date);}
-        if (dayname(t_moonrise.date) == '') {day_moonrise = timeformat(t_moonrise.date,false,true,'num',true,'short',false);}
-        else                                {day_moonrise = dayname(t_moonrise.date);}
-        if (dayname(t_moonset.date) == '')  {day_moonset = timeformat(t_moonset.date,false,true,'num',true,'short',false);}
-        else                                {day_moonset = dayname(t_moonset.date);}
+        moon_data.push({
+            't' : time.date,
+            'h' : altaz.altitude,
+            'a' : altaz.azimuth,
+            'd' : Astronomy.GeoVector('Moon', time, true).Length()*Astronomy.KM_PER_AU,
+            'p' : Astronomy.Illumination('Moon', time).phase_fraction
+        });
     }
 
-    // Tõusu, kulminatsiooni ja loojangu ajad ja suunad
-    document.getElementById('fw-moon-meridiantime').innerHTML = '<span style="font-size: 11px;">'
-        + day_moonmeridian+ '</span><br>'
-        + timeformat(moonmeridian.time.date,false,false,'long',false,'long',true,false) + '<br><span style="font-size: 10px;">&nbsp;</span>';
-    document.getElementById('fw-moon-risetime').innerHTML = '<span style="font-size: 11px;">'
-        + day_moonrise + '</span><br>'
-        + timeformat(t_moonrise.date,false,false,'long',false,'long',true,false);
-    document.getElementById('fw-moon-settime').innerHTML = '<span style="font-size: 11px;">'
-        + day_moonset + '</span><br>'
-        + timeformat(t_moonset.date,false,false,'long',false,'long',true,false);
-    document.getElementById('fw-moon-riseazm').innerHTML = cardinal(altaz_moonrise.azimuth);
-    document.getElementById('fw-moon-setazm').innerHTML = cardinal(altaz_moonset.azimuth);
+
+    // Pildi joonistamine
+    if (draw) {
+        let day_midpoint = Math.floor(moon_data.length/2),
+            tm = moon_data[day_midpoint].t,
+            libration = Astronomy.Libration(tm);
+            infolabel = 'Väärtused päeva keskel (' + timeformat(moon_data[day_midpoint].t, false, false, 'num', false, 'num', true, false) + ')'
+
+        // Infoväljad
+        document.getElementById('moon_phase').innerHTML =
+            '<b>' + moonphase(t0,t1) + '</b> ('
+            + numberformat(100*moon_data[day_midpoint].p,'abs',0) + '%)';
+        document.getElementById('moon_dist').innerHTML =
+            '<b>Kaugus</b>: '
+            + (libration.dist_km).toLocaleString('et-ee',{'maximumFractionDigits':0}) + '&nbsp;km';
+        document.getElementById('moon_size').innerHTML =
+            '<b>Nurksuurus</b>: '
+            + numberformat(libration.diam_deg*60,'abs',2) + "'";
+
+        
+        document.getElementById('moon_phase').title = infolabel;
+        document.getElementById('moon_dist').title = infolabel;
+        document.getElementById('moon_size').title = infolabel;
+        document.getElementById('moon_img').title = infolabel;
 
 
-    // Kuu pilt
-    let xc = moon_img_width/2,
-        yc = moon_img_height/2,
-        source = document.getElementById("moon_map").getContext("2d").getImageData(0, 0, moon_map_width, moon_map_height).data,
-        out = document.getElementById("moon_img").getContext("2d").createImageData(moon_img_width, moon_img_height);
+        // Kuu pilt
+        let xc = dims.img/2,
+            yc = dims.img/2,
+            ang_px = 30*libration.diam_deg*dims.img/img_hfov,
+            source = document.getElementById("moon_map").getContext("2d").getImageData(0, 0, moon_map_width, moon_map_height).data,
+            out = document.getElementById("moon_img").getContext("2d").createImageData(dims.img, dims.img),
 
-    let projection = d3.geoSatellite()
-        .translate([moon_img_width / 2, moon_img_height / 2]) 
-        .scale(moon_img_height*moon_radius/(2*(libration.dist_km-moon_radius)*Math.tan(0.5*(moon_img_hfov/60)*(Math.PI/180))))
-        .rotate([libration.elat,libration.elon])
-        .distance(libration.dist_km/moon_radius)
-        .precision(.1);
+            projection = d3.geoSatellite()
+                .translate([dims.img / 2, dims.img / 2]) 
+                .scale(dims.img*bodies_params.Moon.r/(2*(libration.dist_km-bodies_params.Moon.r)*Math.tan(0.5*(img_hfov/60)*(Math.PI/180))))
+                .rotate([libration.elat,libration.elon])
+                .distance(libration.dist_km/bodies_params.Moon.r)
+                .precision(.1);
 
-    let subsun = [180-Astronomy.MoonPhase(t), 0];
+        let subsun = [180-Astronomy.MoonPhase(tm), 0];
 
-    for (let i=0; i<out.data.length; i += 4) {
-        let x = (i/4) % moon_img_width + 0.5;
-        let y = Math.floor(i/(4*moon_img_width)) + 0.5;
+        for (let i=0; i<out.data.length; i += 4) {
+            let x = (i/4) % dims.img + 0.5;
+            let y = Math.floor(i/(4*dims.img)) + 0.5;
 
-        let moon_ang_px = 30*libration.diam_deg*moon_img_height/moon_img_hfov
-        let px_angdist = Math.sqrt((x-xc)**2 + (y-yc)**2);
-        let alpha = interpolate(px_angdist,moon_ang_px-0.5,moon_ang_px+0.5,1,0,clip=true);
+            let px_angdist = Math.sqrt((x-xc)**2 + (y-yc)**2);
+            let alpha = interpolate(px_angdist,ang_px-0.5,ang_px+0.5,1,0,clip=true);
 
-        if (alpha == 0) {
-            out.data[i] = 0;
-            out.data[i+1] = 0;
-            out.data[i+2] = 0;
-            out.data[i+3] = 0;
-        } else {
-            let loc = projection.invert([x,y]);
-            let s_x = Math.floor(moon_map_width*(loc[0]+180)/360);
-            let s_y = Math.floor(moon_map_height*(90-loc[1])/180);
+            if (alpha == 0) {
+                out.data[i] = 0;
+                out.data[i+1] = 0;
+                out.data[i+2] = 0;
+                out.data[i+3] = 0;
+            } else {
+                let loc = projection.invert([x,y]);
+                let s_x = Math.floor(moon_map_width*(loc[0]+180)/360);
+                let s_y = Math.floor(moon_map_height*(90-loc[1])/180);
 
-            let phasefac = interpolate(Math.abs(subsun[0]), 0, 180, 1, 2);
-            let fac = interpolate(d3.geoDistance([loc[0],loc[1]],subsun)*180/Math.PI, 89, 91, phasefac, phasefac/10, clip=true);
+                let phasefac = interpolate(Math.abs(subsun[0]), 0, 180, 1, 2);
+                let fac = interpolate(d3.geoDistance([loc[0],loc[1]],subsun)*180/Math.PI, 89, 91, phasefac, phasefac/10, clip=true);
 
-            out.data[i] = source[4*(s_y*moon_map_width+s_x)] * fac;
-            out.data[i+1] = source[4*(s_y*moon_map_width+s_x)+1] * fac;
-            out.data[i+2] = source[4*(s_y*moon_map_width+s_x)+2] * fac;
-            out.data[i+3] = Math.round(alpha*255)
+                out.data[i] = source[4*(s_y*moon_map_width+s_x)] * fac;
+                out.data[i+1] = source[4*(s_y*moon_map_width+s_x)+1] * fac;
+                out.data[i+2] = source[4*(s_y*moon_map_width+s_x)+2] * fac;
+                out.data[i+3] = Math.round(alpha*255)
+            }
         }
+        document.getElementById("moon_img").width = dims.img;
+        document.getElementById("moon_img").height = dims.img;
+        document.getElementById("moon_img").getContext("2d").putImageData(out, 0, 0);
     }
-    document.getElementById("moon_img").getContext("2d").putImageData(out, 0, 0);
-
-    return moonmeridian.time.date
 }
 
 
-/**
- * Funktsioon kogu viguri uuendamiseks.
- * 
- * @arg {bool}  reset:
- *                  true - Päikese ja Kuu andmed uuendatakse süsteemi kellaaja järgi
- *                  false - vaikimisi - lähteajaks on Päikese kuupäeva ja Kuu käigu olemasolevad väärtused
- */
-function fw_update (reset=false) {
-    t_current = new Date();
+// Viguri uuendamine
+function fw_update (calc=false, draw=false) {
 
-    if (reset) {
-        t_suninfo = sundata(t_current);
-        t_mooninfo = moondata(t_current);
+    let bodywidth = document.getElementById('fwbody').clientWidth,
+        new_imsize = Math.round( interpolate(bodywidth, 230, 450, 70, 160, true) ),
+        datestr;
+
+    if (new_imsize != dims.img) {
+        calc = draw = true;
+        dims.img = new_imsize;
+    }
+
+    // UI elementide väärtused
+    if (calc || draw) {
+
+        // Vaatleja asukoht
+        let city = document.getElementById('fw-city').value;
+        if (city == "coords") {
+            obs_pos = new Astronomy.Observer(
+                Number(document.getElementById('fw-lat').value),
+                Number(document.getElementById('fw-lon').value),
+                Number(document.getElementById('fw-elev').value)
+            );
+        } else {
+            obs_pos = new Astronomy.Observer( cities[city].lat, cities[city].lon, cities[city].elev );
+
+            document.getElementById('fw-lat').value = cities[city].lat;
+            document.getElementById('fw-lon').value = cities[city].lon;
+            document.getElementById('fw-elev').value = cities[city].elev;
+        }
+
+        // Kuupäev
+        datestr = document.getElementById('fw-date').value;
+        t_base =  new Date(
+            Number(datestr.slice(0,4)),
+            Number(datestr.slice(5,7))-1,
+            Number(datestr.slice(8,10)),
+            12
+        );
+        t0 = Astronomy.MakeTime( new Date( new Date(t_base.getTime()).setHours( 0,0,0,0) ) );
+        t1 = Astronomy.MakeTime( new Date( new Date(t_base.getTime()).setHours(24,0,0,0) ) );
+    }
+
+
+    // Vajadusel Päikese ja Kuu uued väärtused
+    if (draw) {
+        calc_sundata(true);
+        calc_moondata(true);
+    } else if (calc) {
+        calc_sundata(false);
+        calc_moondata(false);
+    }
+
+    // Päeva nimi, vajadusel reavahetus ja andmed/graafik valik
+    datestr = dayname(t_base);
+    dims['graph_w'] = bodywidth-dims.img-60;
+    document.getElementById('fw-graph-sundata').style.display = '';
+    document.getElementById('fw-graph-moondata').style.display = '';
+    if (dims.graph_w - dims.graph_margin.left - dims.graph_margin.right - 2 < document.getElementById('fw-graph-sundata').clientWidth + document.getElementById('fw-graph-moondata').clientWidth) {
+        document.getElementById('fw-daylabel').innerHTML = datestr == '' ? '<br>' : (' ' + datestr + ',<br>');
+        document.getElementById('fw-graph').style.display = 'none';
+        document.getElementById('fw-graph-sundata').style.display = 'none';
+        document.getElementById('fw-graph-moondata').style.display = 'none';
+        document.getElementById('fw-moondata').style.display = '';
+        document.getElementById('fw-sundata').style.display = '';
+        document.getElementById('fw-suninfo').rowSpan = '1';
     } else {
-        t_suninfo = sundata(t_suninfo);
-        t_mooninfo = moondata(t_mooninfo);
-    }
+        document.getElementById('fw-daylabel').innerHTML = datestr == '' ? '' : (' ' + datestr + ', ');
+        document.getElementById('fw-graph').style.display = '';
+        document.getElementById('fw-graph-sundata').style.display = '';
+        document.getElementById('fw-graph-moondata').style.display = '';
+        document.getElementById('fw-moondata').style.display = 'none';
+        document.getElementById('fw-sundata').style.display = 'none';
+        document.getElementById('fw-suninfo').rowSpan = '2';
 
-    document.getElementById('time-now').innerHTML = timeformat(t_current);
-    document.getElementById('observer-location').innerHTML = numberformat(obs_pos.latitude,'abs',2) + '°N; ' + numberformat(obs_pos.longitude,'abs',2) + '°E';
+        // --------
+        // Graafik
+        // --------
+        dims['graph_h'] = 2*dims.img
+            + document.getElementById('sun_dist').clientHeight
+            + document.getElementById('sun_size').clientHeight
+            + document.getElementById('moon_phase').clientHeight
+            + document.getElementById('moon_dist').clientHeight
+            + document.getElementById('moon_size').clientHeight;
+
+        let intv_hr,
+            intv_deg,
+            max_y;
+            //grid_y = [],
+            //ticks_y = [];
+
+        if      (dims.graph_w > 600)    { intv_hr = 1; }
+        else if (dims.graph_w > 400)    { intv_hr = 2; }
+        else if (dims.graph_w > 300)    { intv_hr = 3; }
+        else                            { intv_hr = 4; }
+
+        // TODO maybe variable?
+        max_y = 75;//Math.max(sun_data.meridian_h,moon_data.meridian_h)/0.8;
+        /*if (Number.isNaN(max_y)) {
+            max_y = Math.max( sun_data.meridian_h, moon_data[0].h, moon_data.at(-1).h )/0.8;
+        }*/
+
+        /*
+        for (let i=0; i<max_y; i++) {
+            if (max_y > 40) {
+                if (i%10 == 0) { ticks_y.push(i); }
+                if (i%5 == 0)  { grid_y.push(i);  }
+            } else if (max_y > 25) {
+                if (i%10 == 0) { ticks_y.push(i); }
+                if (i%2 == 0)  { grid_y.push(i);  }
+            } else if (max_y > 15) {
+                if (i%5 == 0)  { ticks_y.push(i); }
+                if (i%1 == 0)  { grid_y.push(i);  }
+            } else {
+                if (i%2 == 0)  { ticks_y.push(i); }
+                if (i%1 == 0)  { grid_y.push(i);  }
+            }
+        }*/
+        
+        // x-telg (aeg)
+        graph_scale_x = d3.scaleTime(
+            [t0.date, t1.date],
+            [dims.graph_margin.left, dims.graph_w-dims.graph_margin.right]
+        );
+
+        // y-telg (kõrgus)
+        graph_scale_y = d3.scaleLinear(
+            [0, max_y],
+            [dims.graph_h-dims.graph_margin.bottom, dims.graph_margin.top]
+        );
+
+        // Täidetud ala
+        let fillarea = d3.area()
+            .x(d => graph_scale_x(d.t))
+            .y0(graph_scale_y(0))
+            .y1(d => Math.min(graph_scale_y(d.h), graph_scale_y(0)));
+
+        // Joon
+        let line = d3.line()
+            .x(d => graph_scale_x(d.t))
+            .y(d => graph_scale_y(d.h));
+
+        // x-vahejooned
+        function grid_x() {		
+            return d3.axisTop(graph_scale_x)
+                .ticks(d3.timeHour.every(intv_hr))
+        }
+
+        // y-vahejooned
+        function grid_y() {		
+            return d3.axisLeft(graph_scale_y)
+                .ticks(15)
+                //.tickValues(graph_ygrid)
+        }
+
+        // Graafiku svg
+        let graph_svg = d3.create('svg')
+            .attr('id', 'fw-graph-svg')
+            .attr('width', dims.graph_w)
+            .attr('height', dims.graph_h);
+
+        // Grafiku ala piiraja
+        graph_svg.append("clipPath")
+            .attr("id", "graph_clip")
+            .append("rect")
+                .attr("x", dims.graph_margin.left)
+                .attr("y", dims.graph_margin.top)
+                .attr("width", dims.graph_w-dims.graph_margin.left-dims.graph_margin.right)
+                .attr("height", dims.graph_h-dims.graph_margin.top-dims.graph_margin.bottom);
+
+        // Kuu ala graafikule
+        graph_svg.append("path")
+            .attr("fill", "rgba(127,127,127,0.5)")
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("d", fillarea(moon_data));
+
+        // Kuu joon graafikule
+        graph_svg.append("path")
+            .attr("fill", "none")
+            .attr("stroke", "#666")
+            .attr("stroke-width", 2)
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("d", line(moon_data));
+
+        // Päikese ala graafikule
+        graph_svg.append("path")
+            .attr("fill", "rgba(255,255,100,0.5)")
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("d", fillarea(sun_data));
+
+        // Päikese joon graafikule
+        graph_svg.append("path")
+            .attr("fill", "none")
+            .attr("stroke", "rgb(127,127,50)")
+            .attr("stroke-width", "2")
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("d", line(sun_data));
+
+        // Ajatelg graafikule
+        graph_svg.append('g')
+            .attr('transform', 'translate(0,' + (dims.graph_h-dims.graph_margin.bottom) + ')')
+            .call(d3.axisBottom(graph_scale_x)
+                .ticks(d3.timeHour.every(intv_hr))
+                .tickFormat(d3.timeFormat('%H'))
+            );
+
+        // Vasak kõrgustelg graafikule
+        graph_svg.append("g")
+            .attr("transform", 'translate(' + dims.graph_margin.left + ',0)')
+            .call(d3.axisLeft(graph_scale_y)
+                .ticks(7)
+                //.tickValues(ticks_y)
+            );
+
+        // Parem kõrgustelg graafikule
+        graph_svg.append("g")
+            .attr("transform", 'translate(' + (dims.graph_w-dims.graph_margin.right) + ',0)')
+            .call(d3.axisRight(graph_scale_y)
+                .ticks(7)
+                //.tickValues(ticks_y)
+            );
+
+        // x-vahejooned graafikule
+        graph_svg.append("g")			
+            .attr("class", "graph_grid")
+            .attr("transform", "translate(0," + dims.graph_margin.top + ")")
+            .call(grid_x()
+                .tickSize(dims.graph_margin.bottom+dims.graph_margin.top-dims.graph_h)
+                .tickSizeOuter(0)
+                .tickFormat("")
+            );
+
+        // y-vahejooned graafikule
+        graph_svg.append("g")			
+            .attr("class", "graph_grid")
+            .attr("transform", "translate("+ dims.graph_margin.left + ",0)")
+            .call(grid_y()
+                .tickSize(dims.graph_margin.left+dims.graph_margin.right-dims.graph_w)
+                .tickSizeOuter(0)
+                .tickFormat("")
+            );
+
+        // Interaktiivne osa
+        graph_svg.append("line")
+            .attr("id", "graph_timeline")
+            .attr("shape-rendering", "crispEdges")
+            .style("display", 'none')
+            .style("stroke", 'rgb(100,100,255)')
+            .style("stroke-width", '1px');
+
+        graph_svg.append("circle")
+            .attr("id", "graph_moondot")
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("r", 4)
+            .style("display", 'none')
+            .style("fill", '#ccc')
+            .style("stroke", '#666')
+            .style("stroke-width", '2px');
+
+        graph_svg.append("circle")
+            .attr("id", "graph_sundot")
+            .attr("clip-path", "url(#graph_clip)")
+            .attr("r", 4)
+            .style("display", 'none')
+            .style("fill", 'rgb(255,255,100)')
+            .style("stroke", 'rgb(127,127,50)')
+            .style("stroke-width", '2px');
+
+
+        document.getElementById('fw-graph').innerHTML = '';
+        document.getElementById('fw-graph').append(graph_svg.node());
+    }
 }
 
 
-// Lehekülje jooksev uuendus
-setInterval(fw_update, 1000);
 </script>
 
 </html>
