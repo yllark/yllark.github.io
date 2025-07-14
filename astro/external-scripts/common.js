@@ -21,20 +21,25 @@ const   months_long_est = ['jaanuar', 'veebruar', 'märts', 'aprill', 'mai', 'ju
 
         // Linnade koordinaadid ja vaatleja vaikimisi asukoht
         cities = {
-            'estcen' :      {'lon' : 24.90, 'lat' : 58.70, 'elev' : 50},
+            'estcen' :      {'lon' : 24.97, 'lat' : 58.77, 'elev' : 50},
             'Haapsalu' :    {'lon' : 23.54, 'lat' : 58.94, 'elev' :  5},
+            'Jõgeva' :      {'lon' : 26.40, 'lat' : 58.74, 'elev' : 75},
+            'Jõhvi' :       {'lon' : 27.42, 'lat' : 59.36, 'elev' : 60},
             'Kuressaare' :  {'lon' : 22.49, 'lat' : 58.25, 'elev' :  5},
             'Kärdla' :      {'lon' : 22.75, 'lat' : 59.00, 'elev' :  5},
             'Mustvee' :     {'lon' : 26.95, 'lat' : 58.85, 'elev' : 35},
             'Narva' :       {'lon' : 28.19, 'lat' : 59.38, 'elev' : 25},
             'Paide' :       {'lon' : 25.57, 'lat' : 58.88, 'elev' : 60},
             'Petseri' :     {'lon' : 27.61, 'lat' : 57.81, 'elev' : 85},
+            'Põlva' :       {'lon' : 27.07, 'lat' : 58.06, 'elev' : 65},
             'Pärnu' :       {'lon' : 24.50, 'lat' : 58.38, 'elev' :  5},
             'Rakvere' :     {'lon' : 26.36, 'lat' : 59.35, 'elev' : 75},
             'Rapla' :       {'lon' : 24.80, 'lat' : 59.00, 'elev' : 65},
             'Tallinn' :     {'lon' : 24.75, 'lat' : 59.44, 'elev' : 10},
             'Tartu' :       {'lon' : 26.73, 'lat' : 58.38, 'elev' : 35},
+            'Tõrva' :       {'lon' : 25.92, 'lat' : 58.00, 'elev' : 55},
             'Valga' :       {'lon' : 26.04, 'lat' : 57.78, 'elev' : 65},
+            'Võru' :        {'lon' : 27.00, 'lat' : 57.84, 'elev' : 80},
             'Viljandi' :    {'lon' : 25.60, 'lat' : 58.37, 'elev' : 80}
         };
 
@@ -205,6 +210,10 @@ function daterange(t1, t2) {
     return out
 }
 
+// Viivitus
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Astronoomilised ja geograafilised väärtused
 
@@ -234,15 +243,30 @@ function cardinal (a, mode='both') {
 
 /**
  * Funktsioon kuufaaside nimetamiseks
- * Veerandfaasid nimetatakse siis, kui sündmus toimub Kuu eelneva ja järgneva põhjapoolse meridiaaniületuse vahemikus.
+ * Argumente võib esitada kahel moel: 1) t1 ja loc või 2) t1 ja t2.
+ *  1) Veerandfaasi nimetatakse juhul, kui see jääb eelmise ja järgmise põhjapoolse meridiaaniületuse vahele
+ *  2) Veerandfaas nimetatakse juhul, kui see jääb vaatlusvahemiku sisse
  * 
- * @arg {Date | AstroTime | ut} t
+ * @arg {Date | AstroTime | ut} t1 - vaatlusarg või vaatlusvahemiku algus
+ * @arg {Date | AstroTime | ut} t2 - vaatlusvahemiku lõpp
+ * @arg {Observer}              loc - vaatleja asukoht
+ * 
  * @returns {string}            Kuu faasi nimetus
  */
-function moonphase (t) {
-    let moonperiod_start = Astronomy.SearchHourAngle('Moon', obs_pos, 12, t, -1).time;
-    let moonperiod_end = Astronomy.SearchHourAngle('Moon', obs_pos, 12, t, 1).time;
-    let nextquarter = Astronomy.SearchMoonQuarter(moonperiod_start);
+function moonphase (t1, t2=null, loc=null) {
+
+    let moonperiod_start,
+        moonperiod_end,
+        nextquarter;
+
+    if (t2 == null) {
+        moonperiod_start = Astronomy.SearchHourAngle('Moon', loc, 12, t1, -1).time;
+        moonperiod_end = Astronomy.SearchHourAngle('Moon', loc, 12, t1, 1).time;
+    } else {
+        moonperiod_start = Astronomy.MakeTime(t1);
+        moonperiod_end = Astronomy.MakeTime(t2);
+    }
+    nextquarter = Astronomy.SearchMoonQuarter(moonperiod_start);
 
     if (nextquarter.time >= moonperiod_start && nextquarter.time <= moonperiod_end) {
         if      (nextquarter.quarter == 0)  {return 'Kuuloomine';}
@@ -250,7 +274,7 @@ function moonphase (t) {
         else if (nextquarter.quarter == 2)  {return 'Täiskuu';}
         else if (nextquarter.quarter == 3)  {return 'Viimane veerand';}
     } else {
-        let phaseangle = Astronomy.MoonPhase(t);
+        let phaseangle = t2==null ? Astronomy.MoonPhase(t1): Astronomy.MoonPhase((t1.ut+t2.ut)/2);
         if      (phaseangle < 90)   {return 'Noorkuu';}
         else if (phaseangle < 180)  {return 'Kasvav kuu';}
         else if (phaseangle < 270)  {return 'Kahanev kuu';}
