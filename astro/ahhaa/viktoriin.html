@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="et">
+
+<head>
+<meta charset="UTF-8">
+<title>Viktoriin</title>
+
+<style>
+
+    @font-face {
+        font-family: dax-pro;
+        src: url(dax_pro.ttf);
+    }
+
+    @font-face {
+        font-family: dax-pro;
+        src: url(dax_pro_bold.ttf);
+        font-weight: bold;
+    }
+
+    * {
+        font-family: "dax-pro", sans-serif;
+        box-sizing: border-box;
+        color: white;
+    }
+
+
+    .mainbox {
+        border-radius: 40px;
+        padding: 20px;
+        background-color: #22222288;
+    }
+
+    .innerbox {
+        border: solid 1px #666;
+        border-radius: 20px;
+        padding: 20px;
+        background-color: #222;
+        text-align: justify;
+        hyphens: auto;
+    }
+
+    /* Vastuste väli */
+    .answerfield {
+        width: 100px;
+        font-size: larger;
+        font-weight: bold;
+        margin: 10px;
+        padding: 10px;
+        background-color: #000;
+        border: solid 1px #f60;
+        border-radius: 10px;
+        color: #f60;
+        text-align: center;
+    }
+
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+
+    /* Nupp */
+    .clickbutton {
+        font-size: larger;
+        font-weight: bold;
+        margin: 10px;
+        padding: 10px;
+        background-color: #630;
+        border: solid 1px #f60;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .clickbutton:hover {
+        background-color: #a50;
+    }
+
+    .clickbutton:active {
+        filter: brightness(200%);
+    }
+
+    .clickbutton:disabled {
+        background-color: #222;
+        border: solid 1px #666;
+        cursor: not-allowed;
+    }
+
+</style>
+
+</head>
+
+<body 
+    style="
+        background-color: black;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 66vh;
+        margin: 0px;
+    "
+    lang="et"
+    >
+    
+
+    <!-- Ülemine kujunduselement -->
+    <div
+        style="
+            width: min(50vw, 500px);
+            position: absolute;
+            right: 0px;
+            top: 0px;
+            z-index: 1;
+        ">
+        <img src="graafika1.png" width="100%">
+    </div>
+
+    <!-- Sisu -->
+    <div class="mainbox" style="max-width: 500px; z-index: 2;">
+
+        <h1 id="task_title" style="margin-left: 20px; margin-right: 20px;">Ülesanded</h1>
+        <div style="display: flex; justify-content: space-between;">
+            <button id="back" class="clickbutton" onclick="update(current_q-1);">Tagasi</button>
+            <button id="next" class="clickbutton" onclick="update(current_q+1);">Edasi</button>
+        </div>
+
+        <!-- Ülesanne -->
+        <div id="question" class="innerbox"></div>
+
+        <!-- Vale vastus -->
+        <div
+            id="result_false"
+            class="innerbox"
+            style="
+                display: none;
+                margin-top: 10px;
+                background-color: #200;
+            ">
+        </div>
+
+        <!-- Õige vastus -->
+        <div
+            id="result_true"
+            class="innerbox"
+            style="
+                display: none;
+                margin-top: 10px;
+                background-color: #020;
+            ">
+        </div>
+
+    </div>
+
+    <!-- Alumine kujunduselement -->
+    <div
+        style="
+            width: min(50vw, 500px);
+            position: absolute;
+            left: 0px;
+            bottom: 0px;
+            z-index: 1;
+        ">
+        <img src="graafika2.png" width="100%">
+    </div>
+
+</body>
+
+
+<script src="../external-scripts/astronomy.browser.min.js"></script>
+
+<script>
+
+let current_q = 0,
+    answered_q = 0,
+    answers = [0],
+    started = false,
+    finished = false,
+    moondist = (Astronomy.KM_PER_AU*Astronomy.GeoVector('Moon', new Date(), true).Length()),
+
+    texts = {
+        1 : {
+            'q' : '<div><b>Kui mitu päeva</b> on praeguse seisuga kestnud Eesti esimese satelliidi <b>ESTCube-1 kosmoselend</b>?</div>'
+                + '<div style="text-align: center; margin-top: 20px;">Eksimisruum ±&nbsp;0,5&nbsp;päeva<br>'
+                + '<input type="number" id="guess" class="answerfield" min="0" step="0.01">'
+                + '<button class="clickbutton" onclick="submit_guess(1);">Vasta</button></div>',
+            'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
+                +' ESTCube-1 on praeguseks hetkeks lennanud <span id="true_info1" style="font-weight: bold;">xxxx,xxx&nbsp;päeva</span>,'
+                +' ehk umbes <span id="true_info2">xx,x</span>&nbsp;aastat.',
+            'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
+        },
+        2 : {
+            'q' : '<div><b>Kui pikk</b> on praegusel hetkel <b>1 meetri kõrguse vertikaalse posti vari</b> Tartus?'
+                + ' (Kui taevas on pilves, siis kui pikk see vari selge taeva korral oleks?)</div>'
+                + '<div style="text-align: center; margin-top: 20px;">Vastus meetrites. Eksimisruum ±&nbsp;2%<br>'
+                + '<input type="number" id="guess" class="answerfield" min="0" step="0.01">'
+                + '<button class="clickbutton" onclick="submit_guess(2);">Vasta</button></div>',
+            'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
+                +' Päike paistab Tartus praegu (kell <span id="true_info1">xx:xx:xx) xx,xx</span>° kõrgusel,'
+                +' seega peaks vari olema <span id="true_info2" style="font-weight: bold;">x,xx&nbsp;m</span> pikkune.',
+            'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
+        },
+        3 : {
+            'q' : '<div><b>Kui kaugel</b> tuleks Päikesest asuda, et see paistaks <b>sama heledana kui täiskuu</b> Maalt vaadates?'
+                + '<div style="text-align: center; margin-top: 20px;">Vastus astronoomilistes ühikutes. Eksimisruum ±&nbsp;5%<br>'
+                + '<input type="number" id="guess" class="answerfield" min="0" step="1">'
+                + '<button class="clickbutton" onclick="submit_guess(3);">Vasta</button></div>',
+            'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
+                +' Päike on umbes 380&nbsp;000 korda heledam kui täiskuu, ehk selle sama heledana nägemiseks'
+                +' peaks minema √<span style="text-decoration: overline;">380&nbsp000</span> ehk umbes <b>620&nbsp;aü</b> kaugusele. See on enam kui 20 korda suurem Neptuuni orbiidi kaugusest.',
+            'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
+        },
+        4 : {
+            'q' : '<div>1837. aastal mõõtis Wilhelm Struve Tartu Tähetornis esmakordselt teise tähe (Veega) kaugust parallaksimeetodil, saades tulemuseks 0,125" (tänapäeva mõõtmiste põhjal on tegelik väärtus 0,130").'
+                + ' See tähendab, et Veega asub meist umbes 25 valgusaasta kaugusel. Et sellest väga väikesest nurgast veidi aimu saada: <b>kui suur ese paistaks Kuu kaugusel Maalt vaadates sama suure nurkläbimõõduga</b> nagu Struve mõõdetud väärtus?'
+                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
+                + '<div style="text-align: center; margin-top: 20px;">Vastus meetrites. Eksimisruum ±&nbsp;2%<br>'
+                + '<input type="number" id="guess" class="answerfield" min="0" step="1">'
+                + '<button class="clickbutton" onclick="submit_guess(4);">Vasta</button></div>',
+            'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
+                +' 0,125 kaaresekundile vastab Kuu kaugusel <span id="true_info1" style="font-weight: bold;">xxx m</span>,'
+                + ' Tartust Tallinnasse vaadates (linnulennult 160 km) aga vaid <span id="true_info2">xx cm</span> suurune ese.',
+            'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
+        },
+        5 : {
+            'q' : '<div>Kui kiiresti jõuaks Maalt Kuule kosmoselaev, millel on piiramatu kütusevaru ning mootor püsiva kiirendusvõimega 1&nbsp;g?'
+                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
+                + '<div style="text-align: center; margin-top: 20px;">Vastus tundides. Eksimisruum ±&nbsp;5%<br>'
+                + '<input type="number" id="guess" class="answerfield" min="0" step="0.1">'
+                + '<button class="clickbutton" onclick="submit_guess(5);">Vasta</button></div>',
+            'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
+                +' Sellise kosmoselaevaga saaks praegu Maalt Kuule lennata <span id="true_info1" style="font-weight: bold;">x.xx tunniga</span>.',
+            'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
+        }
+    };
+
+
+
+function check_answer(value, question) {
+    texts[question]['a'] = value;
+
+    if (question == 1) {
+        let launch = new Date( Date.UTC(2013, 4, 7, 2, 6, 31) ),
+            days = (new Date() - launch)/86.4e6;
+
+        if ( Math.abs(value-days) <= 0.5 ) {
+            answers[question] = days;
+            texts[question]['t1'] = days.toFixed(3) + '&nbsp;päeva';
+            texts[question]['t2'] = (days/365.2425).toFixed(1);
+            return true;
+        } else {return false;}
+        
+    } else if (question == 2) {
+        let time_now = new Date(),
+            obs_pos = new Astronomy.Observer(58.38, 26.73, 35),
+            radec = Astronomy.Equator('Sun', time_now, obs_pos, true, true),
+            altaz = Astronomy.Horizon(time_now, obs_pos, radec.ra, radec.dec, 'normal'),
+            length = 1/Math.tan(altaz.altitude*Math.PI/180);
+
+        if ( value/length > 0.98 && value/length < 1.02 ) {
+            answers[question] = length;
+            texts[question]['t1'] = time_now.toTimeString().split(' ')[0] + ') ' + altaz.altitude.toFixed(1);
+            texts[question]['t2'] = length.toFixed(2) + ' m';
+            return true;
+        } else {return false;}
+
+    } else if (question == 3) {
+
+        if ( value > 590 && value < 650 ) {
+            answers[question] = 620;
+            texts[question]['t1'] = '';
+            texts[question]['t2'] = '';
+            return true;
+        } else {return false;}
+
+    } else if (question == 4) {
+        let size = 1000*Math.tan(0.125*Math.PI/(3600*180))*moondist;
+
+        if ( value/size > 0.98 && value/size < 1.02 ) {
+            answers[question] = size;
+            texts[question]['t1'] = size.toFixed(0) + '&nbsp;m';
+            texts[question]['t2'] = (100000*Math.tan(0.125*Math.PI/(3600*180))*160).toFixed(1) + '&nbsp;cm';
+            return true;
+        } else {return false;}
+
+    } else if (question == 5) {
+        let time = 2*Math.sqrt(1000*moondist/9.81)/3600;
+
+        if ( value/time > 0.95 && value/time < 1.05 ) {
+            answers[question] = time;
+            texts[question]['t1'] = time.toFixed(2) + '&nbsp;tunniga';
+            texts[question]['t2'] = '';
+            return true;
+        } else {return false;}
+
+    }
+
+
+}
+
+function submit_guess(question) {
+
+    if ( check_answer(document.getElementById('guess').value, question) ) {
+        if (answered_q < question) {answered_q = question;}
+
+        document.getElementById('result_true').innerHTML = texts[question].at
+        if (texts[question].t1 != '') {document.getElementById('true_info1').innerHTML = texts[question].t1;}
+        if (texts[question].t2 != '') {document.getElementById('true_info2').innerHTML = texts[question].t2;}
+
+        document.getElementById('result_true').style.display = '';
+        document.getElementById('result_false').style.display = 'none';
+
+        document.getElementById('next').disabled = false;
+
+        if (question == Object.keys(texts).length && !finished) {finished = new Date();}
+    } else {
+        document.getElementById('result_false').innerHTML = texts[question].af
+
+        document.getElementById('result_true').style.display = 'none';
+        document.getElementById('result_false').style.display = '';
+    }
+}
+
+function update(question) {
+    if (question == 0) {
+        document.getElementById('question').innerHTML = 'Edu lahendamisel!';
+        document.getElementById('task_title').innerHTML = '5 astronoomiaküsimust';
+        document.getElementById('next').innerHTML = 'Alusta';
+        document.getElementById('next').style.display = '';
+        document.getElementById('next').disabled = false;
+        document.getElementById('back').style.display = 'none';
+        document.getElementById('result_true').style.display = 'none';
+        document.getElementById('result_false').style.display = 'none';
+    } else if (question == Object.keys(texts).length+1) {
+        document.getElementById('question').innerHTML = 'Aega kulus: ' + Math.floor((finished-started)/60000) + ' min ' + (((finished-started)%60000)/1000).toFixed(0) + ' s.';
+        document.getElementById('task_title').innerHTML = 'Võidukas lõpp!';
+        document.getElementById('next').style.display = 'none';
+        document.getElementById('back').style.display = '';
+        document.getElementById('result_true').style.display = 'none';
+        document.getElementById('result_false').style.display = 'none';
+    } else {
+        if (!started) { started = new Date(); }
+
+        document.getElementById('task_title').innerHTML = question + '. küsimus';
+        document.getElementById('question').innerHTML = texts[question].q;
+        document.getElementById('next').innerHTML = 'Edasi';
+        document.getElementById('next').style.display = '';
+        document.getElementById('back').style.display = '';
+        if (answered_q < question) {
+            document.getElementById('result_true').style.display = 'none';
+            document.getElementById('result_false').style.display = 'none';
+            document.getElementById('next').disabled = true;
+        } else {
+            document.getElementById('next').disabled = false;
+            document.getElementById('guess').value = texts[question].a;
+            submit_guess(question);
+        }
+
+        if (question == 4 || question == 5) { moondist = (Astronomy.KM_PER_AU*Astronomy.GeoVector('Moon', new Date(), true).Length()); }
+    }
+
+    current_q = question;
+}
+
+update(0);
+
+</script>
+
+</html>
