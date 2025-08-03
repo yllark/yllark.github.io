@@ -207,13 +207,13 @@ let current_q = 0,
                 + '<button class="clickbutton" onclick="submit_guess(3);">Vasta</button></div>',
             'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
                 +' Päike on umbes 380&nbsp;000 korda heledam kui täiskuu, ehk selle sama heledana nägemiseks'
-                +' peaks minema √<span style="text-decoration: overline;">380&nbsp000</span> ehk umbes <b>620&nbsp;aü</b> kaugusele. See on enam kui 20 korda suurem Neptuuni orbiidi kaugusest.',
+                +' peaks minema √<span style="text-decoration: overline;">380&nbsp;000</span> ehk umbes <b>620&nbsp;aü</b> kaugusele. See on enam kui 20 korda suurem Neptuuni orbiidi kaugusest.',
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         },
         4 : {
             'q' : '<div>1837. aastal mõõtis Wilhelm Struve Tartu Tähetornis esmakordselt teise tähe (Veega) kaugust parallaksimeetodil, saades parallaksinurgaks 0,125" (tänapäeva mõõtmiste põhjal on tegelik väärtus 0,130").'
                 + ' See tähendab, et Veega asub meist umbes 25 valgusaasta kaugusel. Et sellest väga väikesest nurgast veidi aimu saada: <b>kui suur ese paistaks Maalt vaadates Kuu kaugusel sama suure nurkläbimõõduga</b> nagu Struve mõõdetud parallaksinurk?'
-                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
+                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + '&nbsp;km kaugusel.'
                 + '<div style="text-align: center; margin-top: 20px;">Vastus meetrites. Eksimisruum ±&nbsp;2%<br>'
                 + '<input type="number" id="guess" class="answerfield" min="0" step="1">'
                 + '<button class="clickbutton" onclick="submit_guess(4);">Vasta</button></div>',
@@ -224,7 +224,7 @@ let current_q = 0,
         },
         5 : {
             'q' : '<div>Kui kiiresti jõuaks Maa orbiidilt Kuu orbiidile kosmoselaev, millel on piiramatu kütusevaru ning mootor püsiva kiirendusvõimega 1&nbsp;g?'
-                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
+                + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + '&nbsp;km kaugusel.'
                 + '<div style="text-align: center; margin-top: 20px;">Vastus tundides. Eksimisruum ±&nbsp;5%<br>'
                 + '<input type="number" id="guess" class="answerfield" min="0" step="0.1">'
                 + '<button class="clickbutton" onclick="submit_guess(5);">Vasta</button></div>',
@@ -287,7 +287,7 @@ function check_answer(value, question) {
     } else if (question == 5) {
         let time = Math.sqrt(1000*moondist/9.81);
 
-        if ( value/time > 0.95 && value/time < 1.05 ) {
+        if ( 7200*value/time > 0.95 && 7200*value/time < 1.05 ) {
             answers[question] = time;
             texts[question]['t1'] = (2*time/3600).toFixed(2) + '&nbsp;tunniga';
             texts[question]['t2'] = (9.81*time/1000).toFixed(0) + '&nbsp;km/s';
@@ -324,7 +324,7 @@ function submit_guess(question) {
 
 function update(question) {
     if (question == 0) {
-        document.getElementById('question').innerHTML = 'Siin tuleb vastata viiele astronoomiaküsimusele. Kõigi materjalide ja abivahendite kasutamine on lubatud. Edu vastamisel!';
+        document.getElementById('question').innerHTML = 'Siin tuleb leida vastus viiele kosmosetehnoloogia- ja astronoomiateemalisele ülesandele. Igasuguste materjalide ja abivahendite kasutamine on lubatud.<br><b>Edu vastamisel!</b>';
         document.getElementById('task_title').innerHTML = 'Tudengisatelliidi<br>orienteerumisvõistlus';
         document.getElementById('next').innerHTML = 'Alusta';
         document.getElementById('next').style.display = '';
@@ -368,4 +368,5 @@ update(0);
 </script>
 
 </html>
+
 
