@@ -287,7 +287,7 @@ function check_answer(value, question) {
     } else if (question == 5) {
         let time = Math.sqrt(1000*moondist/9.81);
 
-        if ( 7200*value/time > 0.95 && 7200*value/time < 1.05 ) {
+        if ( 1800*value/time > 0.95 && 1800*value/time < 1.05 ) {
             answers[question] = time;
             texts[question]['t1'] = (2*time/3600).toFixed(2) + '&nbsp;tunniga';
             texts[question]['t2'] = (9.81*time/1000).toFixed(0) + '&nbsp;km/s';
@@ -368,6 +368,7 @@ update(0);
 </script>
 
 </html>
+
 
 
 
