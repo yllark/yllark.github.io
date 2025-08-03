@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<title>Viktoriin</title>
+<title>Tudengisatelliidi orienteerumisvõistlus</title>
 
 <style>
 
@@ -84,6 +84,7 @@
         background-color: #222;
         border: solid 1px #666;
         cursor: not-allowed;
+        filter: none;
     }
 
 </style>
@@ -184,8 +185,8 @@ let current_q = 0,
                 + '<input type="number" id="guess" class="answerfield" min="0" step="0.01">'
                 + '<button class="clickbutton" onclick="submit_guess(1);">Vasta</button></div>',
             'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
-                +' ESTCube-1 on praeguseks hetkeks lennanud <span id="true_info1" style="font-weight: bold;">xxxx,xxx&nbsp;päeva</span>,'
-                +' ehk umbes <span id="true_info2">xx,x</span>&nbsp;aastat.',
+                + ' ESTCube-1 on praeguseks hetkeks lennanud <span id="true_info1" style="font-weight: bold;">xxxx,xxx&nbsp;päeva</span>,'
+                + ' ehk umbes <span id="true_info2">xx,x</span>&nbsp;aastat.',
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         },
         2 : {
@@ -195,8 +196,8 @@ let current_q = 0,
                 + '<input type="number" id="guess" class="answerfield" min="0" step="0.01">'
                 + '<button class="clickbutton" onclick="submit_guess(2);">Vasta</button></div>',
             'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
-                +' Päike paistab Tartus praegu (kell <span id="true_info1">xx:xx:xx) xx,xx</span>° kõrgusel,'
-                +' seega peaks vari olema <span id="true_info2" style="font-weight: bold;">x,xx&nbsp;m</span> pikkune.',
+                + ' Päike paistab Tartus praegu (kell <span id="true_info1">xx:xx:xx) xx,xx</span>° kõrgusel,'
+                + ' seega peaks vari olema <span id="true_info2" style="font-weight: bold;">x,xx&nbsp;m</span> pikkune.',
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         },
         3 : {
@@ -210,25 +211,26 @@ let current_q = 0,
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         },
         4 : {
-            'q' : '<div>1837. aastal mõõtis Wilhelm Struve Tartu Tähetornis esmakordselt teise tähe (Veega) kaugust parallaksimeetodil, saades tulemuseks 0,125" (tänapäeva mõõtmiste põhjal on tegelik väärtus 0,130").'
-                + ' See tähendab, et Veega asub meist umbes 25 valgusaasta kaugusel. Et sellest väga väikesest nurgast veidi aimu saada: <b>kui suur ese paistaks Kuu kaugusel Maalt vaadates sama suure nurkläbimõõduga</b> nagu Struve mõõdetud väärtus?'
+            'q' : '<div>1837. aastal mõõtis Wilhelm Struve Tartu Tähetornis esmakordselt teise tähe (Veega) kaugust parallaksimeetodil, saades parallaksinurgaks 0,125" (tänapäeva mõõtmiste põhjal on tegelik väärtus 0,130").'
+                + ' See tähendab, et Veega asub meist umbes 25 valgusaasta kaugusel. Et sellest väga väikesest nurgast veidi aimu saada: <b>kui suur ese paistaks Maalt vaadates Kuu kaugusel sama suure nurkläbimõõduga</b> nagu Struve mõõdetud parallaksinurk?'
                 + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
                 + '<div style="text-align: center; margin-top: 20px;">Vastus meetrites. Eksimisruum ±&nbsp;2%<br>'
                 + '<input type="number" id="guess" class="answerfield" min="0" step="1">'
                 + '<button class="clickbutton" onclick="submit_guess(4);">Vasta</button></div>',
             'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
-                +' 0,125 kaaresekundile vastab Kuu kaugusel <span id="true_info1" style="font-weight: bold;">xxx m</span>,'
+                + ' 0,125 kaaresekundile vastab Kuu kaugusel <span id="true_info1" style="font-weight: bold;">xxx m</span>,'
                 + ' Tartust Tallinnasse vaadates (linnulennult 160 km) aga vaid <span id="true_info2">xx cm</span> suurune ese.',
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         },
         5 : {
-            'q' : '<div>Kui kiiresti jõuaks Maalt Kuule kosmoselaev, millel on piiramatu kütusevaru ning mootor püsiva kiirendusvõimega 1&nbsp;g?'
+            'q' : '<div>Kui kiiresti jõuaks Maa orbiidilt Kuu orbiidile kosmoselaev, millel on piiramatu kütusevaru ning mootor püsiva kiirendusvõimega 1&nbsp;g?'
                 + ' Kuu on Maast praegu ' + moondist.toLocaleString("et-ee", {maximumFractionDigits: 0}) + ' km kaugusel.'
                 + '<div style="text-align: center; margin-top: 20px;">Vastus tundides. Eksimisruum ±&nbsp;5%<br>'
                 + '<input type="number" id="guess" class="answerfield" min="0" step="0.1">'
                 + '<button class="clickbutton" onclick="submit_guess(5);">Vasta</button></div>',
             'at' : '<span style="color: green; font-weight: bold;">Õige vastus!</span>'
-                +' Sellise kosmoselaevaga saaks praegu Maalt Kuule lennata <span id="true_info1" style="font-weight: bold;">x.xx tunniga</span>.',
+                + ' Sellise kosmoselaevaga saaks praegu Maalt Kuule lennata <span id="true_info1" style="font-weight: bold;">x.xx tunniga</span>.'
+                + ' Teekonna keskpunktis saavutatav maksimaalne kiirus oleks <span id="true_info2">x.xx km/s</span>.',
             'af' : '<span style="color: red; font-weight: bold;">Vale vastus!</span> Proovi uuesti.'
         }
     };
@@ -283,12 +285,12 @@ function check_answer(value, question) {
         } else {return false;}
 
     } else if (question == 5) {
-        let time = 2*Math.sqrt(1000*moondist/9.81)/3600;
+        let time = Math.sqrt(1000*moondist/9.81);
 
         if ( value/time > 0.95 && value/time < 1.05 ) {
             answers[question] = time;
-            texts[question]['t1'] = time.toFixed(2) + '&nbsp;tunniga';
-            texts[question]['t2'] = '';
+            texts[question]['t1'] = (2*time/3600).toFixed(2) + '&nbsp;tunniga';
+            texts[question]['t2'] = (9.81*time/1000).toFixed(0) + '&nbsp;km/s';
             return true;
         } else {return false;}
 
@@ -322,8 +324,8 @@ function submit_guess(question) {
 
 function update(question) {
     if (question == 0) {
-        document.getElementById('question').innerHTML = 'Edu lahendamisel!';
-        document.getElementById('task_title').innerHTML = '5 astronoomiaküsimust';
+        document.getElementById('question').innerHTML = 'Siin tuleb vastata viiele astronoomiaküsimusele. Kõigi materjalide ja abivahendite kasutamine on lubatud. Edu vastamisel!';
+        document.getElementById('task_title').innerHTML = 'Tudengisatelliidi<br>orienteerumisvõistlus';
         document.getElementById('next').innerHTML = 'Alusta';
         document.getElementById('next').style.display = '';
         document.getElementById('next').disabled = false;
@@ -331,7 +333,7 @@ function update(question) {
         document.getElementById('result_true').style.display = 'none';
         document.getElementById('result_false').style.display = 'none';
     } else if (question == Object.keys(texts).length+1) {
-        document.getElementById('question').innerHTML = 'Aega kulus: ' + Math.floor((finished-started)/60000) + ' min ' + (((finished-started)%60000)/1000).toFixed(0) + ' s.';
+        document.getElementById('question').innerHTML = 'Tubli töö!<br>Aega kulus: <b>' + Math.floor((finished-started)/60000) + ' min ' + (((finished-started)%60000)/1000).toFixed(0) + ' s</b>.';
         document.getElementById('task_title').innerHTML = 'Võidukas lõpp!';
         document.getElementById('next').style.display = 'none';
         document.getElementById('back').style.display = '';
@@ -340,7 +342,7 @@ function update(question) {
     } else {
         if (!started) { started = new Date(); }
 
-        document.getElementById('task_title').innerHTML = question + '. küsimus';
+        document.getElementById('task_title').innerHTML = question + '. ülesanne';
         document.getElementById('question').innerHTML = texts[question].q;
         document.getElementById('next').innerHTML = 'Edasi';
         document.getElementById('next').style.display = '';
@@ -366,3 +368,4 @@ update(0);
 </script>
 
 </html>
+
