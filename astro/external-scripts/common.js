@@ -41,6 +41,31 @@ const   months_long_est = ['jaanuar', 'veebruar', 'märts', 'aprill', 'mai', 'ju
             'Valga' :       {'lon' : 26.04, 'lat' : 57.78, 'elev' : 65},
             'Võru' :        {'lon' : 27.00, 'lat' : 57.84, 'elev' : 80},
             'Viljandi' :    {'lon' : 25.60, 'lat' : 58.37, 'elev' : 80}
+        },
+
+        constel_names = {
+            'For' : 'Ahi',              'Pup' : 'Ahter',                'Ara' : 'Altar',            'Sgr' : 'Ambur',
+            'And' : 'Andromeeda',       'Com' : 'Bereniike Juuksed',    'Del' : 'Delfiin',          'Eri' : 'Eriidanus',
+            'Phe' : 'Fööniks',          'Her' : 'Herkules',             'Equ' : 'Hobu',             'Lup' : 'Hunt',
+            'Hya' : 'Hüdra',            'Lyn' : 'Ilves',                'Ind' : 'Indiaanlane',      'CVn' : 'Jahipenid',
+            'Lep' : 'Jänes',            'Ari' : 'Jäär',                 'Lib' : 'Kaalud',           'Crv' : 'Kaaren',
+            'Cam' : 'Kaelkirjak',       'Gem' : 'Kaksikud',             'Psc' : 'Kalad',            'Cap' : 'Kaljukits',
+            'Cha' : 'Kameeleon',        'Crt' : 'Karikas',              'Boo' : 'Karjane',          'Cas' : 'Kassiopeia',
+            'Cep' : 'Kefeus',           'Hor' : 'Kell',                 'Cen' : 'Kentaur',          'Car' : 'Kiil',
+            'Sct' : 'Kilp',             'Tri' : 'Kolmnurk',             'Pyx' : 'Kompass',          'Aql' : 'Kotkas',
+            'Scl' : 'Kujur',            'Dor' : 'Kuldkala',             'Gru' : 'Kurg',             'Mus' : 'Kärbes',
+            'Men' : 'Lavamägi',         'Vol' : 'Lendkala',             'Dra' : 'Lohe',             'Cyg' : 'Luik',
+            'Hyi' : 'Lõunahüdra',       'PsA' : 'Lõunakala',            'TrA' : 'Lõunakolmnurk',    'CrA' : 'Lõunakroon',
+            'Cru' : 'Lõunarist',        'Leo' : 'Lõvi',                 'Lyr' : 'Lüüra',            'Pic' : 'Maalija',
+            'Ser' : 'Madu',             'Oph' : 'Maokandja',            'Mic' : 'Mikroskoop',       'Vir' : 'Neitsi',
+            'Sge' : 'Nool',             'Oct' : 'Oktant',               'Ori' : 'Orion',            'Pav' : 'Paabulind',
+            'Aps' : 'Paradiisilind',    'Peg' : 'Pegasus',              'Per' : 'Perseus',          'Ant' : 'Pump',
+            'Vel' : 'Purjed',           'CrB' : 'Põhjakroon',           'Vul' : 'Rebane',           'Sex' : 'Sekstant',
+            'Cir' : 'Sirkel',           'Lac' : 'Sisalik',              'Sco' : 'Skorpion',         'CMa' : 'Suur Peni',
+            'UMa' : 'Suur Karu',        'Tau' : 'Sõnn',                 'Tel' : 'Teleskoop',        'Tuc' : 'Tuukan',
+            'Col' : 'Tuvi',             'Cae' : 'Uurits',               'Cet' : 'Vaal',             'Aqr' : 'Veevalaja',
+            'Aur' : 'Veomees',          'Nor' : 'Vinkel',               'Cnc' : 'Vähk',             'LMi' : 'Väike Lõvi',
+            'CMi' : 'Väike Peni',       'UMi' : 'Väike Karu',           'Ret' : 'Võrk',             'Mon' : 'Ükssarvik'
         };
 
 
@@ -48,6 +73,11 @@ const   months_long_est = ['jaanuar', 'veebruar', 'märts', 'aprill', 'mai', 'ju
 // -------------
 // Funktsioonid
 // -------------
+// Viivitus
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Aja ja arvude esitamine
 
 /**
@@ -67,7 +97,7 @@ const   months_long_est = ['jaanuar', 'veebruar', 'märts', 'aprill', 'mai', 'ju
  */
 function timeformat (t, daylabel=false, date=true, months='num', year=true, years='long', time=true, secs=true, tz=false) {
 
-    if      (t instanceof Astronomy.AstroTime)  { t = t.date }
+    if      (t instanceof Astronomy.AstroTime)  { t = t.date; }
     else if (! t instanceof Date)               { throw('timeformat: argument is not Date or AstroTime'); }
 
     // Kui sekundeid ei trükita, ümarda aeg lähima minutini
@@ -112,13 +142,16 @@ function timeformat (t, daylabel=false, date=true, months='num', year=true, year
 }
 
 /**
- * Funktsioon kuupäeva trükkimiseks
+ * Funktsioon kuupäeva ISO-vormindamiseks
  * 
  * @arg {Date | AstroTime}  t
- * @returns {string}        Kuupäev kujul d-mm-yyyy
+ * @returns {string}        Kuupäev kujul yyyy-mm-dd
  */
 function datestring(t) {
-    return timeformat(t,false,true,'num','long',true,false).replaceAll('.','-');
+    if      (t instanceof Astronomy.AstroTime)  { t = t.date; }
+    else if (! t instanceof Date)               { throw('datestring: argument is not Date or AstroTime'); }
+
+    return t.toLocaleDateString('sv');
 }
 
 /**
@@ -210,10 +243,6 @@ function daterange(t1, t2) {
     return out
 }
 
-// Viivitus
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 // Astronoomilised ja geograafilised väärtused
 
@@ -238,6 +267,24 @@ function cardinal (a, mode='both') {
 
         if      (mode == 'name') {return dir;}
         else if (mode == 'both') {return a.toFixed(0) + '° (' + dir + ')';}
+    }
+}
+
+/**
+ * Funktsioon taevakeha näeva kõrguse korrigeerimiseks, arvestades atmosfääri refraktsiooni.
+ * Arvutus Sæmundssoni (1986) algoritmi põhjal. Arvestatakse vaid positiivset refraktsiooni, R väärtus kahaneb nulli u -5 kraadi kõrgusel
+ * 
+ * @arg {number} h - objekti geomeetriline kõrgus
+ * @arg {number} T - õhutemperatuur (C, vaikimisi 10)
+ * @arg {number} P - õhurõhk (kPa, vaikimisi 101)
+ * 
+ * @returns {number} Refraktsiooniga korrigeeritud kõrgus
+ */
+function refract(h, T=10, P=101) {
+    if (h < -5.01) {return h;}
+    else {
+        let R = 1.02 * (P/101) * (283/(273+T)) / Math.tan( ( h + (10.3/(h+5.11)) )*Astronomy.DEG2RAD );
+        return R > 0 ? h+R/60 : h;
     }
 }
 
