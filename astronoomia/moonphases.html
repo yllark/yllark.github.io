@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="et">
+
+<head>
+<meta charset="UTF-8">
+<title>astronoomia.ee Kuu faasid</title>
+
+<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+
+<style>
+    :root {
+        --textcolor: #888;
+        --hovercolor: #00ccff88;
+        --bgcolor: #00ccff22;
+    }
+
+    * {
+        font-family: 'Roboto', sans-serif;
+        color: var(--textcolor);
+        box-sizing: border-box;
+        border-collapse: collapse;
+    }
+
+    svg {
+        display: block;
+        margin: auto;
+    }
+
+    /* Kursorile reageerivad elemendid */
+    .hoverblock { background-color: var(--bgcolor); }
+
+    .hoverblock:hover {
+        background-color: var(--hovercolor) !important;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+    .hoverblock:active, input:active, select:active { filter: brightness(2); }
+
+    input, select {
+        background-color: transparent;
+        border: none;
+        vertical-align: baseline;
+        font-size: medium;
+        font-weight: bold;
+    }
+
+    input:hover, select:hover {
+        background-color: var(--hovercolor);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    /* Tabeliväljade vaikimisi kujundus */
+    td, th { padding: 2px 7px; }
+    th {font-size: smaller;}
+
+    td.quartertime { text-align: right; }
+
+    td.style2 {
+        background-color: #00ccff11;
+    }
+
+    .datefield_normal {
+        display: inline-block;
+        text-align: right;
+        margin-left: 5px;
+    }
+    .datefield_small {
+        display: inline-block;
+        text-align: right;
+        margin-left: 0;
+        font-size: xx-small;
+    }
+    .timefield_normal {
+        display: inline-block;
+        text-align: right;
+        width: 35px;
+        font-size: smaller;
+    }
+    .timefield_small {
+        display: inline-block;
+        text-align: right;
+        width: 25px;
+        font-size: xx-small;
+    }
+    .heading_normal {
+        font-size: medium;
+    }
+    .heading_small {
+        font-size: x-small;
+    }
+
+</style>
+
+</head>
+
+<body
+    style="
+        background-color: transparent;
+        margin: 0px auto;
+        max-width: 600px;
+        min-width: 220px;
+    "
+    onresize="resize();"
+>
+
+<!-- Aasta valik -->
+<div id="moonphase_head" style="width: 100%; display: flex;">
+
+    <!-- Eelmine aasta -->
+    <div
+        class="hoverblock"
+        title="Eelmine aasta"
+        style="display: flex; flex-grow: 1; padding: 10px; border-top-left-radius: 20px;"
+        onclick="shift_years(-1)"
+    >
+        <svg width="10" height="16">
+            <polygon points="10,0 10,16 0,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+
+    <!-- Praegused aastad -->
+    <div style="padding: 10px; text-align: center; background-color: var(--bgcolor);">
+        Aasta:
+        <input
+            type="number"
+            id="moonphase_year"
+            step="1"
+            style="width: 60px;"
+            onchange="
+                this.value = clamp(Number(this.value), min_year, max_year);
+                update_phases();
+            "
+        ><br>
+        Kellaaeg:
+        <select
+            id="moonphase_tz"
+            style="width: 80px; margin-top: 2px;"
+            onchange="update_phases()"
+        >
+            <option value="loc">kohalik</option>
+            <option value="utc">UTC</option>
+        </select>
+    </div>
+
+    <!-- Järgmine aasta -->
+    <div
+        class="hoverblock"
+        title="Järgmine aasta"
+        style="display: flex; flex-grow: 1; padding: 10px; border-top-right-radius: 20px;"
+        onclick="shift_years(1)"
+    >
+        <svg width="10" height="16">
+            <polygon points="0,0 0,16 10,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+
+</div>
+
+<!-- Sisu -->
+<div 
+    id="moonphase_content"
+    style="
+        border: 10px solid var(--bgcolor);
+        border-top: 5px solid var(--bgcolor);
+        border-radius: 0px 0px 20px 20px;
+    "
+    >
+
+    <table style="width: 100%; height: 100%; cursor: text;">
+        <thead>
+            <tr>
+                <th id="moonphase_0" class="heading_normal">Kuu&shy;loomine</th>
+                <th id="moonphase_1" class="heading_normal">I veerand</th>
+                <th id="moonphase_2" class="heading_normal">Täis&shy;kuu</th>
+                <th id="moonphase_3" class="heading_normal">III veerand</th>
+            </tr>
+            <tr>
+                <th><img src="../meedia/kuu0.svg" width="20"></th>
+                <th><img src="../meedia/kuu2.svg" width="20"></th>
+                <th><img src="../meedia/kuu4.svg" width="20"></th>
+                <th><img src="../meedia/kuu6.svg" width="20"></th>
+            </tr>
+        </thead>
+
+        <tbody id="moonphase_table"></tbody>
+    </table>
+
+</div>
+
+</body>
+
+<!--Skriptid-->
+<script src="external/astronomy.browser.min.js"></script>
+<script src="common.js"></script>
+
+<!--Veebilehe skript-->
+<script>
+
+const
+    max_h = 470,
+    min_year = 1900,
+    max_year = 2199;
+
+document.getElementById('moonphase_year').value = new Date().getFullYear();
+document.getElementById('moonphase_year').min = min_year;
+document.getElementById('moonphase_year').max = max_year;
+
+
+function shift_years (n) {
+    const
+        oldyear = Number(document.getElementById('moonphase_year').value),
+        delta = n>0 ? Math.min(n, max_year-oldyear) : Math.max(n, min_year-oldyear);
+
+    document.getElementById('moonphase_year').value = oldyear + delta;
+    update_phases();
+}
+
+
+function update_phases() {
+    const utc = document.getElementById('moonphase_tz').value == 'utc';
+
+    let year = Number(document.getElementById('moonphase_year').value),
+        quarter = Astronomy.SearchMoonQuarter(Astronomy.MakeTime( utc ? new Date(Date.UTC(year)) : new Date(year, 0) )),
+        end = Astronomy.MakeTime( utc ? new Date(Date.UTC(year+1)) : new Date(year+1 ,0) ),
+        htmlstr = '<tr>' + '<td class="quartertime"></td>'.repeat(quarter.quarter),
+        prev_month = -1,
+        style = false;
+    
+    while (true) {
+
+        if (utc ? quarter.time.date.getUTCMonth() != prev_month : quarter.time.date.getMonth() != prev_month) {
+            prev_month++;
+            style = !style;
+        }
+
+        htmlstr += `<td class="quartertime${style ? ' style2' : ''}"><span class="datefield_normal">${timeformat(quarter.time,'wd',true,'num',false,'long',false,false,false,utc, true)}`
+            + `</span> <span class="timefield_normal">${timeformat(quarter.time,'none',false,'num',false,'long',true,false,false,utc, true)}</span></td>`;
+
+        quarter = Astronomy.NextMoonQuarter(quarter);
+
+        if (quarter.time > end) {
+            htmlstr += '<td class="quartertime style2"></td>'.repeat( (4-quarter.quarter)%4 ) + '</tr>';
+            break
+        } else if (quarter.quarter == 0) {
+            htmlstr += '</tr><tr>';
+        }
+    }
+
+    document.getElementById('moonphase_table').innerHTML = htmlstr;
+    resize();
+}
+
+function resize () {
+
+    let norm_w = window.innerWidth > 490
+        dates = norm_w ? document.getElementsByClassName('datefield_small') : document.getElementsByClassName('datefield_normal'),
+        times = norm_w ? document.getElementsByClassName('timefield_small') : document.getElementsByClassName('timefield_normal'),
+        heads = norm_w ? document.getElementsByClassName('heading_small') : document.getElementsByClassName('heading_normal');
+
+    for (let i = dates.length-1; i >= 0; i--) {
+        dates[i].className = norm_w ? 'datefield_normal' : 'datefield_small';
+        times[i].className = norm_w ? 'timefield_normal' : 'timefield_small';
+    }
+    for (let i = heads.length-1; i >= 0; i--) {
+        heads[i].className = norm_w ? 'heading_normal' : 'heading_small';
+    }
+
+    document.getElementById('moonphase_0').style.width
+        = document.getElementById('moonphase_1').style.width
+        = document.getElementById('moonphase_2').style.width
+        = document.getElementById('moonphase_3').style.width
+        = document.getElementById('moonphase_table').offsetWidth/4 + 'px';
+
+    try {
+        window.parent.document.getElementById('moonphases_frame').height
+            = document.getElementById('moonphase_head').offsetHeight
+            + document.getElementById('moonphase_content').offsetHeight
+            + 5 + 'px';
+    } catch (TypeError) {}
+}
+
+update_phases();
+
+</script>
+
+</html>

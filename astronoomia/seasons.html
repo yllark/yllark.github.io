@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="et">
+
+<head>
+<meta charset="UTF-8">
+<title>astronoomia.ee aastaajad</title>
+
+<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+
+<style>
+    :root {
+        --textcolor: #888;
+        --hovercolor: #00ccff88;
+        --bgcolor: #00ccff22;
+    }
+
+    * {
+        font-family: 'Roboto', sans-serif;
+        color: var(--textcolor);
+        box-sizing: border-box;
+        border-collapse: collapse;
+    }
+
+    svg {
+        display: block;
+        margin: auto;
+    }
+
+    /* Kursorile reageerivad elemendid */
+    .hoverblock { background-color: var(--bgcolor); }
+
+    .hoverblock:hover {
+        background-color: var(--hovercolor) !important;
+        cursor: pointer;
+        user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+    }
+
+    .hoverblock:active, input:active, select:active { filter: brightness(2); }
+
+    input, select {
+        background-color: transparent;
+        border: none;
+        vertical-align: baseline;
+        width: 55px;
+        font-size: medium;
+        font-weight: bold;
+    }
+
+    input:hover, select:hover {
+        background-color: var(--hovercolor);
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    /* Tabeliväljade vaikimisi kujundus */
+    td, th { padding: 2px 7px; }
+    tr:nth-child(odd) { background-color: #00ccff11; }
+    tr.currentyear { background-color: #ffff0022; }
+
+    td.seasontime { text-align: right; }
+
+    .datefield_normal {
+        display: inline-block;
+        text-align: right;
+        margin-left: 5px;
+    }
+    .datefield_small {
+        display: inline-block;
+        text-align: right;
+        margin-left: 0;
+        font-size: xx-small;
+    }
+    .timefield_normal {
+        display: inline-block;
+        text-align: right;
+        width: 35px;
+        font-size: smaller;
+    }
+    .timefield_small {
+        display: inline-block;
+        text-align: right;
+        width: 25px;
+        font-size: xx-small;
+    }
+    .heading_normal {
+        font-size: medium;
+    }
+    .heading_small {
+        font-size: x-small;
+    }
+
+</style>
+
+</head>
+
+<body
+    style="
+        background-color: transparent;
+        margin: 0px auto;
+        max-width: 700px;
+        min-width: 250px;
+    "
+    onresize="resize();"
+>
+
+<!-- Aastate valik -->
+<div id="seasons_head" style="width: 100%; display: flex;">
+
+    <!-- Minevikku -->
+    <div
+        class="hoverblock"
+        title="10 aastat tagasi"
+        style="display: flex; flex-grow: 1; padding: 10px; border-top-left-radius: 20px;"
+        onclick="shift_years(-10)"
+    >
+        <svg width="17" height="16">
+            <polygon points="17,0 17,16 7,8" style="fill:var(--textcolor)" />
+            <polygon points="10,0 10,16 0,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+    <div
+        class="hoverblock"
+        title="1 aasta tagasi"
+        style="display: flex; flex-grow: 1;"
+        onclick="shift_years(-1)"
+    >
+        <svg width="10" height="16">
+            <polygon points="10,0 10,16 0,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+
+    <!-- Praegused aastad -->
+    <div style="padding: 10px; text-align: center; background-color: var(--bgcolor);">
+        Aastad:
+        <div style="display: inline-block; white-space: nowrap;">
+            <input
+                type="number"
+                id="seasons_startyear"
+                dir="rtl"
+                step="1"
+                onchange="
+                    this.value=clamp(Number(this.value), min_year, document.getElementById('seasons_endyear').value);
+                    update_seasons();
+                "
+            ><b>–</b><input
+                type="number"
+                id="seasons_endyear"
+                step="1"
+                onchange="
+                    this.value=clamp(Number(this.value), document.getElementById('seasons_startyear').value, max_year);
+                    update_seasons();
+                "
+            >
+        </div><br>
+        Kellaaeg:
+        <select
+            id="seasons_tz"
+            style="width: 80px; margin-top: 2px;"
+            onchange="update_seasons()"
+        >
+            <option value="loc">kohalik</option>
+            <option value="utc">UTC</option>
+        </select>
+    </div>
+
+    <!-- Tulevikku -->
+    <div
+        class="hoverblock"
+        title="1 aasta edasi"
+        style="display: flex; flex-grow: 1;"
+        onclick="shift_years(1)"
+    >
+        <svg width="10" height="16">
+            <polygon points="0,0 0,16 10,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+    <div
+        class="hoverblock"
+        title="10 aastat edasi"
+        style="display: flex; flex-grow: 1; padding: 10px; border-top-right-radius: 20px;"
+        onclick="shift_years(10)"
+    >
+        <svg width="17" height="16">
+            <polygon points="0,0 0,16 10,8" style="fill:var(--textcolor)" />
+            <polygon points="7,0 7,16 17,8" style="fill:var(--textcolor)" />
+        </svg>
+    </div>
+
+</div>
+
+<!-- Sisu -->
+<div 
+    id="seasons_content"
+    style="
+        border: 10px solid var(--bgcolor);
+        border-top: 5px solid var(--bgcolor);
+        border-radius: 0px 0px 20px 20px;
+    "
+    >
+
+    <table style="width: 100%; height: 100%; cursor: text;">
+        <thead>
+            <tr style="background-color: transparent;">
+                <th class="heading_normal">Aasta</th>
+                <th class="heading_normal">Kevad</th>
+                <th class="heading_normal">Suvi</th>
+                <th class="heading_normal">Sügis</th>
+                <th class="heading_normal">Talv</th>
+            </tr>
+        </thead>
+
+        <tbody id="seasons_table"></tbody>
+    </table>
+
+</div>
+
+</body>
+
+<!--Skriptid-->
+<script src="external/astronomy.browser.min.js"></script>
+<script src="common.js"></script>
+
+<!--Veebilehe skript-->
+<script>
+
+const
+    current_year = new Date().getFullYear(),
+    min_year = 1900,
+    max_year = 2199,
+    max_h = 350;
+
+document.getElementById('seasons_startyear').value = 5*Math.floor((current_year-2)/5);
+document.getElementById('seasons_endyear').value = 5*Math.floor((current_year-2)/5)+9;
+document.getElementById('seasons_startyear').min = document.getElementById('seasons_endyear').min = min_year;
+document.getElementById('seasons_startyear').max = document.getElementById('seasons_endyear').max = max_year;
+
+
+function shift_years (n) {
+    const
+        oldstart = Number(document.getElementById('seasons_startyear').value),
+        oldend = Number(document.getElementById('seasons_endyear').value),
+        delta = n>0 ? Math.min(n, max_year-oldend) : Math.max(n, min_year-oldstart);
+
+    document.getElementById('seasons_startyear').value = oldstart + delta;
+    document.getElementById('seasons_endyear').value = oldend + delta;
+    update_seasons();
+}
+
+
+function update_seasons() {
+    const utc = document.getElementById('seasons_tz').value == 'utc';
+    
+    let htmlstr = '',
+        seasons;
+
+    for (
+        let year = Number(document.getElementById('seasons_startyear').value);
+        year <= Number(document.getElementById('seasons_endyear').value);
+        year++
+    ) {
+        seasons = Astronomy.Seasons(year);
+        htmlstr += `<tr${year==current_year ? ' class="currentyear"' : ''}><th class="heading_normal">${year}</th>`
+            + `<td class="seasontime"><span class="datefield_normal">${timeformat(seasons.mar_equinox,'wd',true,'num',false,'long',false,false,false,utc,true)}`
+            + `</span> <span class="timefield_normal">${timeformat(seasons.mar_equinox,'none',false,'num',false,'long',true,false,false,utc,true)}</span></td>`
+            + `<td class="seasontime"><span class="datefield_normal">${timeformat(seasons.jun_solstice,'wd',true,'num',false,'long',false,false,false,utc,true)}`
+            + `</span> <span class="timefield_normal">${timeformat(seasons.jun_solstice,'none',false,'num',false,'long',true,false,false,utc,true)}</span></td>`
+            + `<td class="seasontime"><span class="datefield_normal">${timeformat(seasons.sep_equinox,'wd',true,'num',false,'long',false,false,false,utc,true)}`
+            + `</span> <span class="timefield_normal">${timeformat(seasons.sep_equinox,'none',false,'num',false,'long',true,false,false,utc,true)}</span></td>`
+            + `<td class="seasontime"><span class="datefield_normal">${timeformat(seasons.dec_solstice,'wd',true,'num',false,'long',false,false,false,utc,true)}`
+            + `</span> <span class="timefield_normal">${timeformat(seasons.dec_solstice,'none',false,'num',false,'long',true,false,false,utc,true)}</span></td></tr>`;
+    }
+
+    document.getElementById('seasons_table').innerHTML = htmlstr;
+    resize();
+}
+
+function resize () {
+    let norm_w = window.innerWidth > 550
+        dates = norm_w ? document.getElementsByClassName('datefield_small') : document.getElementsByClassName('datefield_normal'),
+        times = norm_w ? document.getElementsByClassName('timefield_small') : document.getElementsByClassName('timefield_normal'),
+        heads = norm_w ? document.getElementsByClassName('heading_small') : document.getElementsByClassName('heading_normal');
+
+    for (let i = dates.length-1; i >= 0; i--) {
+        dates[i].className = norm_w ? 'datefield_normal' : 'datefield_small';
+        times[i].className = norm_w ? 'timefield_normal' : 'timefield_small';
+    }
+    for (let i = heads.length-1; i >= 0; i--) {
+        heads[i].className = norm_w ? 'heading_normal' : 'heading_small';
+    }
+
+    try {
+        window.parent.document.getElementById('seasons_frame').height
+            = document.getElementById('seasons_head').offsetHeight
+            + document.getElementById('seasons_content').offsetHeight
+            + 5 + 'px';
+    } catch (TypeError) {}
+}
+
+update_seasons();
+
+</script>
+
+</html>
